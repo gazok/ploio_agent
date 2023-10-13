@@ -35,8 +35,8 @@
 
 ```
 0          2    3    4 (octet)   
-+----------+---------+
-| Unix epoch         |
++--------------------+
+| Unix epoch (8 oct) |
 +----------+----+----+
 | L2       | L3 | Lx |
 +----------+----+----+
@@ -50,11 +50,11 @@
 +--------------------+
 ```
 
-*\* uses exactly 48 octets*
+*\* uses exactly 52 octets*
 
 |      field | desc                                                                                                       |
 |-----------:|:-----------------------------------------------------------------------------------------------------------|
-| unix epoch | unix timestamp                                                                                             |
+| unix epoch | unix timestamp (8 octets)                                                                                  |
 |      proto | proto enum; see below                                                                                      |
 |         L2 | address family; see "https://www.iana.org/assignments/address-family-numbers/address-family-numbers.xhtml" |
 |         L3 | L3 protocol number (typically, ip protocol number)                                                         |
