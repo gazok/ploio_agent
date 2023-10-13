@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <InvariantGlobalization>true</InvariantGlobalization>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <!-- See: https://github.com/dotnet/aspnetcore/issues/50694 -->
+        <!-- PublishAot>true</PublishAot -->
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <ContainerRepository>frouros</ContainerRepository>
+        <DockerDefaultTargetOS>linux</DockerDefaultTargetOS>
+        <ContainerBaseImage>mcr.microsoft.com/dotnet/aspnet:8.0</ContainerBaseImage>
+        <ContainerRuntimeIdentifier>linux-x64</ContainerRuntimeIdentifier>
+    </PropertyGroup>
+    <ItemGroup>
+        <ContainerPort Include="8080" Type="tcp" />
+    </ItemGroup>
+    <ItemGroup>
+      <None Remove="Properties\launchSettings.json" />
+    </ItemGroup>
+
+</Project>
