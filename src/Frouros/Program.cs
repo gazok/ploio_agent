@@ -19,9 +19,6 @@ using Microsoft.AspNetCore.Server.Kestrel.Core;
 
 var builder = WebApplication.CreateSlimBuilder(args);
 
-builder.Configuration
-       .AddJsonFile("settings.json");
-
 builder.WebHost
        .ConfigureKestrel(options =>
        {

@@ -27,7 +27,7 @@ public class PacketLogAgent : IHostedService, IDisposable
 
     private readonly ILogger<PacketLogAgent> _logger;
 
-    private PacketLogAgent(
+    public PacketLogAgent(
         ILogger<PacketLogAgent> logger,
         IConfiguration config, 
         IPacketChannel channel, 
@@ -40,7 +40,7 @@ public class PacketLogAgent : IHostedService, IDisposable
 
         try
         {
-            var name = config["device"] ?? throw new KeyNotFoundException();
+            var name = config["Device"] ?? throw new KeyNotFoundException();
             _dev = LibPcapLiveDeviceList.Instance[name];
         }
         catch (KeyNotFoundException)
