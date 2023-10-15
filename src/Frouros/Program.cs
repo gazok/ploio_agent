@@ -12,41 +12,44 @@
 //     See the License for the specific language governing permissions and
 //     limitations under the License.
 
-using System.Buffers;
+using Frouros.Net.Abstraction;
+using Frouros.Net.Impls;
+using Frouros.Net.Services;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
-using RouteHandler = Frouros.Web.RouteHandler;
 
 var builder = WebApplication.CreateSlimBuilder(args);
 
+builder.Configuration
+       .AddJsonFile("settings.json");
+
 builder.WebHost
-       .ConfigureAppConfiguration(options =>
-        {
-            var basedir  = AppDomain.CurrentDomain.BaseDirectory;
-            var filepath = Path.Combine(basedir, "config.json");
-            options.AddJsonFile(filepath, true);
-        })
        .ConfigureKestrel(options =>
-        {
-            options.ListenAnyIP(8080, opts =>
-            {
-                // HTTP2 / HTTP3 require a ssl certificate
-                opts.Protocols = HttpProtocols.Http1;
-            });
-        });
+       {
+           options.ListenAnyIP(8080, opts =>
+           {
+               // HTTP2 / HTTP3 require a ssl certificate
+               opts.Protocols = HttpProtocols.Http1;
+           });
+       });
 
-var app = builder.Build();
+builder.Services
+       .AddSingleton<IPacketParser, PacketParser>()
+       .AddSingleton<IPacketChannel, PacketLogChannel>()
+       .AddHostedService<PacketLogAgent>();
 
-app.MapGet("/", async ctx =>
+var app     = builder.Build();
+var channel = app.Services.GetRequiredService<IPacketChannel>();
+
+app.MapGet("/", ctx =>
 {
-    using var data   = await RouteHandler.RunAsync(ctx);
-    var       buffer = data.GetBuffer();
+    return Task.Factory.StartNew(() =>
+    {
+        var written = channel.Read(ctx.Response.Body);
 
-    ctx.Response.Headers.CacheControl = "no-cache";
-
-    ctx.Response.ContentType   = "application/octet-stream";
-    ctx.Response.ContentLength = buffer.Length;
-
-    ctx.Response.BodyWriter.Write(buffer);
+        ctx.Response.Headers.CacheControl = "no-cache";
+        ctx.Response.ContentType          = "application/octet-stream";
+        ctx.Response.ContentLength        = written;
+    });
 });
 
 app.Run();
