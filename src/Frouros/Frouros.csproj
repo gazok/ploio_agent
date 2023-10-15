@@ -1,5 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
+    <!-- Basics -->
     <PropertyGroup>
         <TargetFramework>net8.0</TargetFramework>
         <Nullable>enable</Nullable>
@@ -10,6 +11,7 @@
         <!-- PublishAot>true</PublishAot -->
     </PropertyGroup>
 
+    <!-- Docker -->
     <PropertyGroup>
         <ContainerRepository>frouros</ContainerRepository>
         <DockerDefaultTargetOS>linux</DockerDefaultTargetOS>
@@ -19,8 +21,10 @@
     <ItemGroup>
         <ContainerPort Include="8080" Type="tcp" />
     </ItemGroup>
+
+    <!-- Dependencies -->
     <ItemGroup>
-      <None Remove="Properties\launchSettings.json" />
+      <PackageReference Include="SharpPcap" Version="6.2.5" />
     </ItemGroup>
 
 </Project>
