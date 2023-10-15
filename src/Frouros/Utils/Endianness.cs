@@ -15,7 +15,7 @@
 using System.Buffers.Binary;
 using System.Runtime.CompilerServices;
 
-namespace Frouros.Net;
+namespace Frouros.Utils;
 
 public static class Endianness
 {
