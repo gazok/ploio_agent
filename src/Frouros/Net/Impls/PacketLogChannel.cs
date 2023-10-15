@@ -12,13 +12,15 @@
 //     See the License for the specific language governing permissions and
 //     limitations under the License.
 
+using Frouros.Net.Abstraction;
+using Frouros.Net.Models;
 using Frouros.Primitives;
 using Frouros.Utils;
 using Microsoft.Win32.SafeHandles;
 
-namespace Frouros.Net;
+namespace Frouros.Net.Impls;
 
-public class PacketLogChannel : IDisposable
+public class PacketLogChannel : IPacketChannel, IDisposable
 {
     // Buffer size must be multiple of BufferSize
     private const int FileSize = BufferSize * 4096;
@@ -27,6 +29,8 @@ public class PacketLogChannel : IDisposable
     // Buffer size must be greater than 4096; See benchmarks
     private const int BufferSize = NativePacketLog.StructSize * 2048;
 
+    private readonly ILogger<PacketLogChannel> _logger;
+    
     private readonly SafeFileHandle _fd;
     private readonly ScopedBuffer   _buffer;
     private readonly object         _bufferSync = new();
@@ -35,8 +39,11 @@ public class PacketLogChannel : IDisposable
     private long _fileOffset;
     private int  _offset;
     
-    public PacketLogChannel()
+    
+    public PacketLogChannel(ILogger<PacketLogChannel> logger)
     {
+        _logger = logger;
+        
         var filepath = Path.GetTempFileName();
 
         _fd = File.OpenHandle(
@@ -61,11 +68,14 @@ public class PacketLogChannel : IDisposable
         if (_offset <= BufferSize)
             return;
 
+        int ofs;
         lock (_bufferSync)
         {
             // double-checking-lock,early-return
             if (_offset <= BufferSize)
                 return;
+
+            ofs = _offset;
 
             // pre-reallocate file
             if (_fileOffset >= FileSize)
@@ -82,6 +92,8 @@ public class PacketLogChannel : IDisposable
             _fileOffset += _offset;
             _offset     =  0;
         }
+        
+        _logger.LogInformation($"{ofs} bytes flushed into file");
     }
 
     private long ReserveOffset()
@@ -98,20 +110,26 @@ public class PacketLogChannel : IDisposable
             // update offset after update
             ofs = ReserveOffset();
         }
+        
+        // TODO: if flush twice? packet bypass agent
 
         log.AsNative().TryWriteTo(_buffer.GetBuffer(), ofs);
     }
 
-    public void Read(Stream stream)
+    public long Read(Stream stream)
     {
         Flush();
-        
+
+        long read;
         lock (_bufferSync)
         {
             using var fs = new FileStream(_fd, FileAccess.Read, BufferSize, true);
             fs.CopyTo(stream, _fileOffset, BufferSize);
+            read        = _fileOffset;
             _fileOffset = 0;
         }
+
+        return read;
     }
 
     public void Dispose()
