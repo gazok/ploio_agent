@@ -11,17 +11,6 @@
         <!-- PublishAot>true</PublishAot -->
     </PropertyGroup>
 
-    <!-- Docker -->
-    <PropertyGroup>
-        <ContainerRepository>frouros</ContainerRepository>
-        <DockerDefaultTargetOS>linux</DockerDefaultTargetOS>
-        <ContainerBaseImage>mcr.microsoft.com/dotnet/aspnet:8.0</ContainerBaseImage>
-        <ContainerRuntimeIdentifier>linux-x64</ContainerRuntimeIdentifier>
-    </PropertyGroup>
-    <ItemGroup>
-        <ContainerPort Include="8080" Type="tcp" />
-    </ItemGroup>
-
     <!-- Dependencies -->
     <ItemGroup>
       <PackageReference Include="SharpPcap" Version="6.2.5" />
