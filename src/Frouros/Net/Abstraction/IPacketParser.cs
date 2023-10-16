@@ -12,6 +12,7 @@
 //     See the License for the specific language governing permissions and
 //     limitations under the License.
 
+using System.Diagnostics.CodeAnalysis;
 using Frouros.Net.Models;
 using PacketDotNet;
 
@@ -29,5 +30,5 @@ public interface IPacketParser
     /// If failed, will be set to invalid packet log.
     /// </param>
     /// <returns>true if parsing was successful. otherwise, false.</returns>
-    public bool TryParse(DateTime ts, Packet packet, out PacketLog log);
+    public bool TryParse(DateTime ts, Packet packet, [NotNullWhen(true)] out PacketLog? log);
 }
