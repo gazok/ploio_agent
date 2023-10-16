@@ -15,6 +15,7 @@
 using Frouros.Net.Abstraction;
 using Frouros.Net.Models;
 using Frouros.Primitives;
+using Frouros.System.Abstraction;
 using Frouros.Utils;
 using Microsoft.Win32.SafeHandles;
 
@@ -22,114 +23,72 @@ namespace Frouros.Net.Impls;
 
 public class PacketLogChannel : IPacketChannel, IDisposable
 {
-    // Buffer size must be multiple of BufferSize
-    private const int FileSize = BufferSize * 4096;
-
-    // Buffer size must be multiple of NativePacketLog.StructSize
-    // Buffer size must be greater than 4096; See benchmarks
     private const int BufferSize = NativePacketLog.StructSize * 2048;
 
     private readonly ILogger<PacketLogChannel> _logger;
-    
-    private readonly SafeFileHandle _fd;
-    private readonly ScopedBuffer   _buffer;
+    private readonly IAssemblyInfo             _info;
+
+    private readonly FileStream     _fd;
+    private readonly BufferedStream _buffer;
     private readonly object         _bufferSync = new();
 
-    private long _fileSize;
-    private long _fileOffset;
-    private int  _offset;
-    
-    
-    public PacketLogChannel(ILogger<PacketLogChannel> logger)
+
+    public PacketLogChannel(ILogger<PacketLogChannel> logger, IAssemblyInfo info)
     {
         _logger = logger;
-        
+        _info   = info;
+
         var filepath = Path.GetTempFileName();
 
-        _fd = File.OpenHandle(
+        _fd = new FileStream(
             filepath,
             FileMode.Create,
             FileAccess.ReadWrite,
             FileShare.None,
+            BufferSize,
             FileOptions.RandomAccess | FileOptions.Asynchronous | FileOptions.DeleteOnClose);
-
-        _buffer = new ScopedBuffer(BufferSize);
-
-        RandomAccess.SetLength(_fd, FileSize);
-
-        _fileSize   = FileSize;
-        _fileOffset = 0;
-        _offset     = 0;
+        _fd.Seek(0, SeekOrigin.Begin);
+        
+        _buffer = new BufferedStream(_fd, BufferSize);
     }
 
     private void Flush()
     {
-        // double-checking-lock,early-return
-        if (_offset <= BufferSize)
-            return;
-
-        int ofs;
         lock (_bufferSync)
         {
-            // double-checking-lock,early-return
-            if (_offset <= BufferSize)
-                return;
-
-            ofs = _offset;
-
-            // pre-reallocate file
-            if (_fileOffset >= FileSize)
-            {
-                while (_fileOffset >= FileSize)
-                    _fileSize += FileSize;
-                RandomAccess.SetLength(_fd, _fileSize);
-            }
-
-            RandomAccess.Write(
-                _fd,
-                new ReadOnlySpan<byte>(_buffer.GetBuffer(), 0, _offset),
-                _fileOffset);
-            _fileOffset += _offset;
-            _offset     =  0;
+            _buffer.Flush();
+            _fd.Flush();
         }
-        
-        _logger.LogInformation($"{ofs} bytes flushed into file");
-    }
-
-    private long ReserveOffset()
-    {
-        return Interlocked.Add(ref _offset, NativePacketLog.StructSize) - NativePacketLog.StructSize;
     }
 
     public void Write(PacketLog log)
     {
-        var ofs = ReserveOffset();
-        if (ofs > BufferSize)
+        var buffer = new byte[NativePacketLog.StructSize];
+        log.AsNative().TryWriteTo(buffer, 0);
+        lock (_bufferSync)
         {
-            Flush();
-            // update offset after update
-            ofs = ReserveOffset();
+            _buffer.Write(buffer);
         }
-        
-        // TODO: if flush twice? packet bypass agent
-
-        log.AsNative().TryWriteTo(_buffer.GetBuffer(), ofs);
     }
 
-    public long Read(Stream stream)
+    public void Read(Stream stream)
     {
         Flush();
 
-        long read;
         lock (_bufferSync)
         {
-            using var fs = new FileStream(_fd, FileAccess.Read, BufferSize, true);
-            fs.CopyTo(stream, _fileOffset, BufferSize);
-            read        = _fileOffset;
-            _fileOffset = 0;
-        }
+            _logger.LogInformation("{}", _fd.Position);
+            
+            new PacketDumpHeader(
+                    _info.Version,
+                    checked((uint)(_buffer.Length / NativePacketLog.StructSize))) // TODO: Handle integer overflow
+               .WriteTo(stream);
 
-        return read;
+            var ofs = _fd.Position;
+            _fd.Seek(0, SeekOrigin.Begin);
+            _fd.CopyTo(stream, BufferSize);
+            _fd.Seek(ofs, SeekOrigin.Begin);
+        }
     }
 
     public void Dispose()

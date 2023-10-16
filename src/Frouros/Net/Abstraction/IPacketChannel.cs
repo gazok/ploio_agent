@@ -20,5 +20,5 @@ public interface IPacketChannel
 {
     public void Write(PacketLog log);
 
-    public long Read(Stream stream);
+    public void Read(Stream stream);
 }
