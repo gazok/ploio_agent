@@ -12,24 +12,30 @@
 //     See the License for the specific language governing permissions and
 //     limitations under the License.
 
+using System.Text;
 using Frouros.Net.Abstraction;
 using Frouros.Net.Impls;
 using Frouros.Net.Services;
+using Frouros.System.Abstraction;
+using Frouros.System.Impls;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 
 var builder = WebApplication.CreateSlimBuilder(args);
 
 builder.WebHost
        .ConfigureKestrel(options =>
-       {
-           options.ListenAnyIP(8080, opts =>
-           {
-               // HTTP2 / HTTP3 require a ssl certificate
-               opts.Protocols = HttpProtocols.Http1;
-           });
-       });
+        {
+            options.ListenAnyIP(8080, opts =>
+            {
+                // HTTP2 / HTTP3 require a ssl certificate
+                opts.Protocols = HttpProtocols.Http1;
+            });
+
+            options.AllowSynchronousIO = true;
+        });
 
 builder.Services
+       .AddSingleton<IAssemblyInfo, AssemblyInfo>()
        .AddSingleton<IPacketParser, PacketParser>()
        .AddSingleton<IPacketChannel, PacketLogChannel>()
        .AddHostedService<PacketLogAgent>();
@@ -41,11 +47,9 @@ app.MapGet("/", ctx =>
 {
     return Task.Factory.StartNew(() =>
     {
-        var written = channel.Read(ctx.Response.Body);
-
-        ctx.Response.Headers.CacheControl = "no-cache";
-        ctx.Response.ContentType          = "application/octet-stream";
-        ctx.Response.ContentLength        = written;
+        ctx.Response.Headers.Append("Cache-Control", "no-cache");
+        ctx.Response.ContentType   = "application/octet-stream";
+        channel.Read(ctx.Response.Body);
     });
 });
 
