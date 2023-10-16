@@ -12,6 +12,7 @@
 //     See the License for the specific language governing permissions and
 //     limitations under the License.
 
+using System.Text;
 using Frouros.Net.Abstraction;
 using PacketDotNet;
 using SharpPcap;
@@ -43,40 +44,36 @@ public class PacketLogAgent : IHostedService, IDisposable
             var name = config["Device"] ?? throw new KeyNotFoundException();
             _dev = LibPcapLiveDeviceList.Instance[name];
         }
-        catch (KeyNotFoundException)
+        catch (KeyNotFoundException e)
         {
             // fast-fail
-            throw new ArgumentException("network interface name must be provided");
+            throw new ArgumentException("network interface name must be provided", nameof(config), e);
         }
-        catch (IndexOutOfRangeException)
+        catch (IndexOutOfRangeException e)
         {
             // fast-fail
-            throw new ArgumentOutOfRangeException(nameof(config), config, $"network interface '{config}' not found.");
+            throw new ArgumentOutOfRangeException($"network interface '{config["Device"]}' not found.", e);
         }
     }
 
     private void OnPacketArrival(object sender, PacketCapture args)
     {
-        var ts  = args.Header.Timeval.Date;
+        var ts = args.Header.Timeval.Date;
         
-        var raw = args.GetPacket();
-        if (raw.LinkLayerType != LinkLayers.Ethernet)
+        var pkt = args.GetPacket().GetPacket();
+        if (!_parser.TryParse(ts, pkt, out var log))
         {
-            // do not handle
+            _logger.LogWarning("couldn't parse packet");
             return;
         }
         
-        var pkt = raw.GetPacket();
-        if (!_parser.TryParse(ts, pkt, out var log))
-        {
-            _logger.LogWarning("couldn't parse packet; invalid log will be logged");
-        }
-        
-        _channel.Write(log);
+        _channel.Write(log.Value);
     }
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
+        _logger.LogInformation("Start capturing on '{}'", _dev.Name);
+        
         _dev.Open();
         _dev.OnPacketArrival += OnPacketArrival;
         _dev.StartCapture();
