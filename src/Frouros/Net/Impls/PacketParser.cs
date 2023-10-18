@@ -25,10 +25,16 @@ namespace Frouros.Net.Impls;
 public class PacketParser : IPacketParser
 {
     private readonly ILogger<PacketParser> _logger;
+    private readonly IConfiguration        _config;
 
-    public PacketParser(ILogger<PacketParser> logger)
+    private readonly bool _httpOnly;
+
+    public PacketParser(ILogger<PacketParser> logger, IConfiguration config)
     {
         _logger = logger;
+        _config = config;
+
+        _httpOnly = _config.GetValue<bool>("HttpOnly");
     }
 
     private static bool IsHttp(TcpPacket tcp)
@@ -107,6 +113,6 @@ public class PacketParser : IPacketParser
         }
 
         log = Parse(ts, ip);
-        return true;
+        return !_httpOnly || log.Value.LX == LxProto.HTTP;
     }
 }

@@ -12,6 +12,7 @@
 //     See the License for the specific language governing permissions and
 //     limitations under the License.
 
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Frouros.Utils;
 
@@ -54,8 +55,23 @@ internal readonly partial struct NativePacketLog(
 
         Endianness.WriteBigEndian(span, ref ofs, L3);
         Endianness.WriteBigEndian(span, ref ofs, LX);
+
+        unsafe
+        {
+            var ptr = (byte*)Unsafe.AsPointer(ref span.GetPinnableReference());
+         
+            var ip = SIp;   
+            Unsafe.CopyBlock(ptr + ofs, Unsafe.AsPointer(ref ip), 16);
+            ofs += 16;
+            
+            ip = DIp;
+            Unsafe.CopyBlock(ptr + ofs, Unsafe.AsPointer(ref ip), 16);
+            ofs += 16;
+        }
+        
         Endianness.WriteBigEndian(span, ref ofs, SIp);
         Endianness.WriteBigEndian(span, ref ofs, DIp);
+        
         Endianness.WriteBigEndian(span, ref ofs, SPort);
         Endianness.WriteBigEndian(span, ref ofs, DPort);
         Endianness.WriteBigEndian(span, ref ofs, Size);

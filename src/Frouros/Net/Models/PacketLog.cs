@@ -70,13 +70,11 @@ public readonly struct PacketLog(
             {
                 var epoch = BinaryPrimitives.ReverseEndianness(log.Epoch);
                 var l2    = BinaryPrimitives.ReverseEndianness(log.L2);
-                var sip    = BinaryPrimitives.ReverseEndianness(log.SIp);
-                var dip    = BinaryPrimitives.ReverseEndianness(log.DIp);
                 var sp    = BinaryPrimitives.ReverseEndianness(log.SPort);
                 var dp    = BinaryPrimitives.ReverseEndianness(log.DPort);
                 var size    = BinaryPrimitives.ReverseEndianness(log.Size);
 
-                log = new NativePacketLog(epoch, l2, log.L3, log.LX, sip, dip, sp, dp, size);
+                log = new NativePacketLog(epoch, l2, log.L3, log.LX, log.SIp, log.DIp, sp, dp, size);
             }
 
             var ts = DateTimeOffset.FromUnixTimeSeconds((long)log.Epoch).Date;
@@ -98,6 +96,6 @@ public readonly struct PacketLog(
 
     public override string ToString()
     {
-        return $"{{{Timestamp:hh:mm:ss}|{L3}|{LX}|{Source}|{Destination}|{Size}}}";
+        return $"{{{Timestamp:g}|{L3}|{LX}|{Source}|{Destination}|{Size}}}";
     }
 }
