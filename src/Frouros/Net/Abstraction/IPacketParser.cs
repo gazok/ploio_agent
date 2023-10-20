@@ -30,5 +30,5 @@ public interface IPacketParser
     /// If failed, will be set to invalid packet log.
     /// </param>
     /// <returns>true if parsing was successful. otherwise, false.</returns>
-    public bool TryParse(DateTime ts, Packet packet, [NotNullWhen(true)] out PacketLog? log);
+    public bool? TryParse(DateTime ts, Packet packet, [NotNullWhen(true)] out PacketLog? log);
 }

@@ -104,7 +104,7 @@ public class PacketParser : IPacketParser
             pkt.PayloadLength);
     }
 
-    public bool TryParse(DateTime ts, Packet packet, [NotNullWhen(true)] out PacketLog? log)
+    public bool? TryParse(DateTime ts, Packet packet, [NotNullWhen(true)] out PacketLog? log)
     {
         if (packet is not EthernetPacket { HasPayloadPacket: true, PayloadPacket: IPPacket ip })
         {
@@ -113,6 +113,11 @@ public class PacketParser : IPacketParser
         }
 
         log = Parse(ts, ip);
-        return !_httpOnly || log.Value.LX == LxProto.HTTP;
+        if (_httpOnly && log.Value.LX != LxProto.HTTP)
+        {
+            return null;
+        }
+        
+        return true;
     }
 }

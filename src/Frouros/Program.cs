@@ -25,7 +25,7 @@ var builder = WebApplication.CreateSlimBuilder(args);
 builder.WebHost
        .ConfigureKestrel(options =>
         {
-            options.ListenAnyIP(8080, opts =>
+            options.ListenAnyIP(65001, opts =>
             {
                 // HTTP2 / HTTP3 require a ssl certificate
                 opts.Protocols = HttpProtocols.Http1;

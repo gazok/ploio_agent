@@ -61,13 +61,18 @@ public class PacketLogAgent : IHostedService, IDisposable
         var ts = args.Header.Timeval.Date;
         
         var pkt = args.GetPacket().GetPacket();
-        if (!_parser.TryParse(ts, pkt, out var log))
+
+        var ret = _parser.TryParse(ts, pkt, out var log);
+        if (ret is false)
         {
             _logger.LogWarning("couldn't parse packet");
             return;
         }
-        
+        if (ret is null) 
+            return;
+            
         _channel.Write(log.Value);
+        _logger.LogTrace("{}", log);
     }
 
     public Task StartAsync(CancellationToken cancellationToken)

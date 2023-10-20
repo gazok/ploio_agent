@@ -64,7 +64,8 @@ public class PacketLogChannel : IPacketChannel, IDisposable
     public void Write(PacketLog log)
     {
         var buffer = new byte[NativePacketLog.StructSize];
-        log.AsNative().TryWriteTo(buffer, 0);
+        if (!log.AsNative().TryWriteTo(buffer, 0))
+            _logger.LogCritical("Couldn't write packet log to stream");
         lock (_bufferSync)
         {
             _buffer.Write(buffer);

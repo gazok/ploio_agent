@@ -50,6 +50,7 @@ internal readonly partial struct NativePacketLog(
             return false;
 
         var ofs = offset;
+        
         Endianness.WriteBigEndian(span, ref ofs, Epoch);
         Endianness.WriteBigEndian(span, ref ofs, L2);
 
@@ -69,11 +70,9 @@ internal readonly partial struct NativePacketLog(
             ofs += 16;
         }
         
-        Endianness.WriteBigEndian(span, ref ofs, SIp);
-        Endianness.WriteBigEndian(span, ref ofs, DIp);
-        
         Endianness.WriteBigEndian(span, ref ofs, SPort);
         Endianness.WriteBigEndian(span, ref ofs, DPort);
+        
         Endianness.WriteBigEndian(span, ref ofs, Size);
 
         return true;
