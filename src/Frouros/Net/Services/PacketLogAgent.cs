@@ -22,7 +22,7 @@ namespace Frouros.Net.Services;
 
 public class PacketLogAgent : IHostedService, IDisposable
 {
-    private readonly LibPcapLiveDevice _dev;
+    private readonly IEnumerable<LibPcapLiveDevice> _dev;
     private readonly IPacketChannel    _channel;
     private readonly IPacketParser     _parser;
 
@@ -39,21 +39,7 @@ public class PacketLogAgent : IHostedService, IDisposable
         _channel = channel;
         _parser  = parser;
 
-        try
-        {
-            var name = config["Device"] ?? throw new KeyNotFoundException();
-            _dev = LibPcapLiveDeviceList.Instance[name];
-        }
-        catch (KeyNotFoundException e)
-        {
-            // fast-fail
-            throw new ArgumentException("network interface name must be provided", nameof(config), e);
-        }
-        catch (IndexOutOfRangeException e)
-        {
-            // fast-fail
-            throw new ArgumentOutOfRangeException($"network interface '{config["Device"]}' not found.", e);
-        }
+        _dev = LibPcapLiveDeviceList.Instance.ToArray();
     }
 
     private void OnPacketArrival(object sender, PacketCapture args)
@@ -77,23 +63,32 @@ public class PacketLogAgent : IHostedService, IDisposable
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Start capturing on '{}'", _dev.Name);
+        foreach (var dev in _dev)
+        {
+            _logger.LogInformation("Start capturing on '{}'", dev.Name);
         
-        _dev.Open();
-        _dev.OnPacketArrival += OnPacketArrival;
-        _dev.StartCapture();
+            dev.Open();
+            dev.OnPacketArrival += OnPacketArrival;
+            dev.StartCapture();   
+        }
+        
         return Task.CompletedTask;
     }
 
     public Task StopAsync(CancellationToken cancellationToken)
     {
-        _dev.StopCapture();
-        _dev.Close();
+        foreach (var dev in _dev)
+        {
+            dev.StopCapture();
+            dev.Close();
+        }
+
         return Task.CompletedTask;
     }
 
     public void Dispose()
     {
-        _dev.Dispose();
+        foreach (var dev in _dev)
+            dev.Dispose();
     }
 }
