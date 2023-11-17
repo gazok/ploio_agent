@@ -59,7 +59,11 @@ and is constant on its all lifetime.
             },
             {
                 "Source": "Pod",
-                "Identifier": "{pod-uid}"
+                "Identifier": "{pod-uid}",
+                "Attributes": [
+                    "Source",
+                    "Destination"
+                ]
             },
             ...
         ]
