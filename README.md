@@ -1,10 +1,14 @@
 # Frouros
 
-## Requirement
+## Runtime Requirement
 
+- systemd
+- kubernetes
+  - A host application must be executed as systemd service on physical node
+  - A proxy application must be executed as pod on k8s (like daemon-set)
 - docker
 
-## Build Requirement
+## Compile-time Requirement
 
 - docker
 - docker buildx
