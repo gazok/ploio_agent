@@ -71,3 +71,12 @@ and is constant on its all lifetime.
     ...
 }
 ```
+
+- Activation
+
+```json
+{
+    "{guid}": true|false,
+    ...
+}
+```
