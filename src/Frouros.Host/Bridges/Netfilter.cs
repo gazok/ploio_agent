@@ -81,7 +81,7 @@ public class Netfilter(ILogger<Netfilter> logger, IConfiguration config)
         }
 
         logger.LogInformation("creating queue");
-        if ((qh = nfq_create_queue(h, config.GetValue<ushort>("Queue"), cb, null)) == null)
+        if ((qh = nfq_create_queue(h, (ushort)config.GetValue<uint>("Queue"), cb, null)) == null)
         {
             logger.LogCritical("nfq_create_queue(): {}", GetLastError());
             return false;
