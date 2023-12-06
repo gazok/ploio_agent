@@ -14,21 +14,20 @@
 
 using Frouros.Proxy.Models.Serialization;
 using Frouros.Proxy.Repositories.Abstract;
-using Frouros.Proxy.Workers.Routing.Abstract;
 using Frouros.Shared;
 
 namespace Frouros.Proxy.Workers.Routing;
 
-public class PodRouting(ILogger<PodRouting> logger, IPodAuthRepository cri) : RoutingBase
+public class PodRouting(HttpClient http, ILogger<PodRouting> logger, IPodAuthRepository cri) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken token)
     {
         while (!token.IsCancellationRequested)
         {
-            using var response = await Http.PostAsJsonAsync(
+            using var response = await http.PostAsJsonAsync(
                 new Uri(Specials.CentralServer, "pod"), 
                 cri.Auth,
-                SourceGenerationContext.Default.IReadOnlyDictionaryStringPodInfo, 
+                SerializerOptions.Default,
                 cancellationToken: token);
 
             try

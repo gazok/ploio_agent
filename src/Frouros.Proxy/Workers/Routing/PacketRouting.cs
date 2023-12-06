@@ -15,12 +15,11 @@
 using System.Threading.Channels;
 using Frouros.Proxy.Models.Serialization;
 using Frouros.Proxy.Models.Web;
-using Frouros.Proxy.Workers.Routing.Abstract;
 using Frouros.Shared;
 
 namespace Frouros.Proxy.Workers.Routing;
 
-public class PacketRouting(ILogger<PacketRouting> logger) : RoutingBase
+public class PacketRouting(HttpClient http, ILogger<PacketRouting> logger) : BackgroundService
 {
     private readonly Channel<Dictionary<uint, Packet>> _queue = Channel.CreateUnbounded<Dictionary<uint, Packet>>(
         new UnboundedChannelOptions
@@ -43,10 +42,10 @@ public class PacketRouting(ILogger<PacketRouting> logger) : RoutingBase
                  .SelectMany(dict => dict)
                  .ToDictionary();
 
-            using var response = await Http.PostAsJsonAsync(
+            using var response = await http.PostAsJsonAsync(
                 new Uri(Specials.CentralServer, "packet"),
                 dictionary,
-                SourceGenerationContext.Default.DictionaryUInt32Packet,
+                SerializerOptions.Default,
                 cancellationToken: token
             );
 
