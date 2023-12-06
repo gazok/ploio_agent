@@ -15,12 +15,11 @@
 using System.Threading.Channels;
 using Frouros.Proxy.Models.Serialization;
 using Frouros.Proxy.Models.Web;
-using Frouros.Proxy.Workers.Routing.Abstract;
 using Frouros.Shared;
 
 namespace Frouros.Proxy.Workers.Routing;
 
-public class LogRouting(ILogger<LogRouting> logger) : RoutingBase
+public class LogRouting(HttpClient http, ILogger<LogRouting> logger) : BackgroundService
 {
     private readonly Channel<IEnumerable<Log>> _queue = Channel.CreateUnbounded<IEnumerable<Log>>(
         new UnboundedChannelOptions
@@ -41,10 +40,10 @@ public class LogRouting(ILogger<LogRouting> logger) : RoutingBase
                              .SelectMany(e => e)
                              .ToArray();
 
-            using var response = await Http.PostAsJsonAsync(
+            using var response = await http.PostAsJsonAsync(
                 new Uri(Specials.CentralServer, "log"),
                 logs,
-                SourceGenerationContext.Default.LogArray,
+                SerializerOptions.Default,
                 cancellationToken: token
             );
 

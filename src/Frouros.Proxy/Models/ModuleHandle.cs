@@ -24,6 +24,8 @@ public class ModuleHandle(ModuleInfo info, FileInfo file, IntPtr handle)
     public readonly FileInfo File   = file;
     public readonly IntPtr   Handle = handle;
 
+    public bool Enabled = true;
+    
     public ModuleInitializer? Init;
     public ModuleEntrypoint?  Entrypoint;
 }

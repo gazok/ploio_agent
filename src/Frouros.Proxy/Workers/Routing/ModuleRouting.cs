@@ -14,21 +14,20 @@
 
 using Frouros.Proxy.Models.Serialization;
 using Frouros.Proxy.Repositories.Abstract;
-using Frouros.Proxy.Workers.Routing.Abstract;
 using Frouros.Shared;
 
 namespace Frouros.Proxy.Workers.Routing;
 
-public class ModuleRouting(ILogger<ModuleRouting> logger, IModuleRepository repo) : RoutingBase
+public class ModuleRouting(HttpClient http, ILogger<ModuleRouting> logger, IModuleRepository repo) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken token)
     {
         while (!token.IsCancellationRequested)
         {
-            using var response = await Http.PostAsJsonAsync(
+            using var response = await http.PostAsJsonAsync(
                 new Uri(Specials.CentralServer, "module"),
                 repo.Handles.Select(handle => handle.Info),
-                SourceGenerationContext.Default.IEnumerableModuleInfo,
+                SerializerOptions.Default,
                 cancellationToken: token
             );
 

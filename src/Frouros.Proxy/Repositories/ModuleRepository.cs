@@ -37,7 +37,9 @@ public class ModuleRepository : IModuleRepository, IDisposable
     private readonly ConcurrentDictionary<string, ModuleHandle> _libs;
     private readonly FileSystemWatcher                          _watcher;
 
-    public IEnumerable<ModuleHandle> Handles => _libs.Values;
+    public IEnumerable<ModuleHandle> Handles => _libs.Values.Where(lib => lib.Enabled);
+
+    public ModuleHandle this[Guid guid] => _libs.Values.First(lib => lib.Info.GUID == guid);
 
     public event ModuleEventHandler? MessageReceived;
     
@@ -117,7 +119,7 @@ public class ModuleRepository : IModuleRepository, IDisposable
         var         path = Path.ChangeExtension(file.FullName, ".json");
         ModuleInfo? info;
         using (var fs = File.OpenRead(path))
-            info = JsonSerializer.Deserialize(fs, SourceGenerationContext.Default.ModuleInfo);
+            info = (ModuleInfo?)JsonSerializer.Deserialize(fs, typeof(ModuleInfo), SerializerOptions.Default);
         if (info is null)
             throw new InvalidOperationException("Couldn't deserialize module-info");
         var handle = new ModuleHandle(info, file, NativeLibrary.Load(file.FullName));
