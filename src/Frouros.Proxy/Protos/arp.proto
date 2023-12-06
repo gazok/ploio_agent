@@ -1,0 +1,51 @@
+//    Copyright 2023 Yeong-won Seo
+// 
+//    Licensed under the Apache License, Version 2.0 (the "License");
+//    you may not use this file except in compliance with the License.
+//    You may obtain a copy of the License at
+// 
+//        http://www.apache.org/licenses/LICENSE-2.0
+// 
+//    Unless required by applicable law or agreed to in writing, software
+//    distributed under the License is distributed on an "AS IS" BASIS,
+//    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//    See the License for the specific language governing permissions and
+//    limitations under the License.
+
+syntax = "proto3";
+
+option csharp_namespace = "Frouros.Host";
+
+import "google/protobuf/empty.proto";
+package cri;
+
+service ARP
+{
+  rpc Resolve(EndPointTarget)       returns (ResolvedTarget);
+  rpc ResolveCallback(ARPEventArgs) returns (google.protobuf.Empty);
+  rpc Register(ARPEvent)            returns (google.protobuf.Empty);
+  rpc Unregister(ARPEvent)          returns (google.protobuf.Empty);
+}
+
+message EndPointTarget
+{
+  bytes ip = 1;
+}
+
+message ResolvedTarget
+{
+  optional string uid = 1;
+}
+
+message ARPEvent
+{
+  string uid  = 1;
+  bytes  ip   = 2;
+  uint32 port = 3;
+}
+
+message ARPEventArgs
+{
+  string         uid = 1;
+  repeated bytes ip  = 2;
+}
