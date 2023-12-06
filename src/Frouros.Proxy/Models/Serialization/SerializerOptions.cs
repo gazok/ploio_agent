@@ -26,7 +26,8 @@ public class SerializerOptions
         TypeInfoResolver = SourceGenerationContext.Default,
         Converters =
         {
-            new IPAddressJsonConverter()
+            new IPAddressJsonConverter(),
+            new ModuleActivationJsonConverter()
         }
     };
 }

@@ -24,6 +24,7 @@ namespace Frouros.Proxy.Models.Serialization;
  JsonSerializable(typeof(IPAddress)),
  JsonSerializable(typeof(Log[])),
  JsonSerializable(typeof(ModuleInfo)),
+ JsonSerializable(typeof(ModuleActivationInfo)),
  JsonSerializable(typeof(IEnumerable<ModuleInfo>)),
  JsonSerializable(typeof(IReadOnlyDictionary<string, PodInfo>))]
 #if DEBUG
