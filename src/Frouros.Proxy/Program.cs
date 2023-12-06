@@ -1,3 +1,4 @@
+using System.Net;
 using System.Runtime;
 using Frouros.Proxy.Bridges;
 using Frouros.Proxy.Bridges.Abstract;
@@ -14,6 +15,13 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services
         
+       .AddSingleton<HttpClient>(_ => new HttpClient(new SocketsHttpHandler
+       {
+           AllowAutoRedirect = true,
+           AutomaticDecompression = DecompressionMethods.All,
+           EnableMultipleHttp2Connections = true
+       }, true))
+              
        .AddSingleton<IMembrane, Membrane>()
         
        .AddSingleton<IApplicationInformation, ApplicationInformation>()
