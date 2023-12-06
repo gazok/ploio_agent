@@ -12,6 +12,7 @@
 //    See the License for the specific language governing permissions and
 //    limitations under the License.
 
+using Frouros.Proxy.Models.Web;
 using ModuleHandle = Frouros.Proxy.Models.ModuleHandle;
 
 namespace Frouros.Proxy.Repositories.Abstract;
@@ -19,6 +20,8 @@ namespace Frouros.Proxy.Repositories.Abstract;
 public interface IModuleRepository
 {
     public IEnumerable<ModuleHandle> Handles { get; }
+    
+    public ModuleHandle this[Guid guid] { get; }
 
     public event ModuleEventHandler? MessageReceived;
 }
