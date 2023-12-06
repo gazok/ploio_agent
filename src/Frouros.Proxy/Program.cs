@@ -31,6 +31,7 @@ builder.Services
         
        .AddHostedService<CRIWorker>()
        .AddHostedService<PVIWorker>()
+       .AddHostedService<VMAWorker>()
         
        .AddGrpc();
 
