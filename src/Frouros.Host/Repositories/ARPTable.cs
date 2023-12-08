@@ -14,11 +14,10 @@
 
 using System.Collections.Concurrent;
 using System.Net;
-using Frouros.Host;
-using Frouros.Proxy.Repositories.Abstract;
-using Google.Protobuf;
+using Frouros.Host.Repositories.Abstract;
+using Frouros.Shared.Extensions;
 
-namespace Frouros.Proxy.Repositories;
+namespace Frouros.Host.Repositories;
 
 public class ARPTable(IApplicationInformation app, ICAMTable cam) : IARPTable
 {
@@ -35,16 +34,16 @@ public class ARPTable(IApplicationInformation app, ICAMTable cam) : IARPTable
 
         old?.UnregisterAsync(new ARPEvent
         {
-            Ip   = ByteString.CopyFrom(IPAddress.Any.GetAddressBytes()),
+            Ip   = IPAddress.Any.ToByteString(),
             Port = app.Port,
             Uid  = uid
         });
 
         foreach (var client in _clients)
         {
-            var resolved = await client.ResolveAsync(new EndPointTarget
+            var resolved = await client.ResolveLocalAsync(new EndPointTarget
             {
-                Ip = ByteString.CopyFrom(addr.GetAddressBytes())
+                Ip = addr.ToByteString()
             });
             if (!resolved.HasUid) 
                 continue;
@@ -53,7 +52,7 @@ public class ARPTable(IApplicationInformation app, ICAMTable cam) : IARPTable
 
             await client.RegisterAsync(new ARPEvent
             {
-                Ip   = ByteString.CopyFrom(IPAddress.Any.GetAddressBytes()),
+                Ip   = IPAddress.Any.ToByteString(),
                 Port = app.Port,
                 Uid  = uid
             });

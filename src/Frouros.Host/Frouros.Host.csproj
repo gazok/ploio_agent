@@ -12,6 +12,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <Protobuf Include="Protos\arp.proto" GrpcServices="Server;Client"/>
         <Protobuf Include="Protos\cri.proto" GrpcServices="Server"/>
         <Protobuf Include="Protos\pvi.proto" GrpcServices="Server"/>
     </ItemGroup>

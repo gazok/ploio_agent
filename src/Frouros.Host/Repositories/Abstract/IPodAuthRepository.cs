@@ -12,30 +12,11 @@
 //    See the License for the specific language governing permissions and
 //    limitations under the License.
 
-using System.Net;
-using Frouros.Host;
+using Frouros.Shared.Models;
 
-namespace Frouros.Proxy.Repositories.Abstract;
+namespace Frouros.Host.Repositories.Abstract;
 
-[Flags]
-public enum ResolveFlag
+public interface IPodAuthRepository
 {
-    None    = 0,
-    Confirm = 1
-}
-
-public interface IARPTable
-{
-    public Task<string?> ResolveAsync(IPAddress addr, ResolveFlag flag);
-
-    public ARP.ARPClient GetOrigin(string uid);
-
-    public bool TryResolve(
-        IPAddress          addr,
-        out ARP.ARPClient? client,
-        out string?        uid);
-
-    public void Update(ARP.ARPClient client, IPAddress addr, string uid);
-
-    public void Clear();
+    public IReadOnlyDictionary<string, PodInfo> Auth { get; set; }
 }

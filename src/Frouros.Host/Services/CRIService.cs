@@ -12,19 +12,21 @@
 //    See the License for the specific language governing permissions and
 //    limitations under the License.
 
+using Frouros.Host.Repositories.Abstract;
 using Frouros.Host.Workers;
+using Frouros.Shared.Extensions;
 using Google.Protobuf;
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 
 namespace Frouros.Host.Services;
 
-public class CRIService(CRIWorker worker) : CRI.CRIBase
+public class CRIService(IPodAuthRepository repo) : CRI.CRIBase
 {
     public override Task<PodResponse> Query(PodRequest request, ServerCallContext context)
     {
         var uid = request.Uid;
-        if (!worker.Query().TryGetValue(uid, out var info))
+        if (!repo.Auth.TryGetValue(uid, out var info))
         {
             return Task.FromResult(new PodResponse { IsNull = true });
         }
@@ -39,7 +41,7 @@ public class CRIService(CRIWorker worker) : CRI.CRIBase
             CreatedAt = info.CreatedAt.ToTimestamp(),
             Network =
             {
-                info.Network.Select(ip => ByteString.CopyFrom(ip.GetAddressBytes()))
+                info.Network.Select(ip => ip.ToByteString())
             }
         };
 
@@ -48,6 +50,6 @@ public class CRIService(CRIWorker worker) : CRI.CRIBase
 
     public override Task<PodCollection> QueryAll(Empty request, ServerCallContext context)
     {
-        return Task.FromResult(new PodCollection{ Pods = { worker.Query().Keys }});
+        return Task.FromResult(new PodCollection{ Pods = { repo.Auth.Keys }});
     }
 }

@@ -12,19 +12,12 @@
 //    See the License for the specific language governing permissions and
 //    limitations under the License.
 
-using System.Collections.Frozen;
-using Frouros.Proxy.Repositories.Abstract;
-using Frouros.Shared.Models;
+using System.Net;
 
-namespace Frouros.Proxy.Repositories;
+namespace Frouros.Host.Repositories.Abstract;
 
-public class PodAuthRepository : IPodAuthRepository
+public interface IApplicationInformation
 {
-    private FrozenDictionary<string, PodInfo>? _auth;
-
-    public IReadOnlyDictionary<string, PodInfo> Auth
-    {
-        get => _auth ?? FrozenDictionary<string, PodInfo>.Empty; 
-        set => _auth = value as FrozenDictionary<string, PodInfo> ?? value.ToFrozenDictionary();
-    }
+    public uint        Port  { get; }
+    public IPAddress[] Hosts { get; }
 }

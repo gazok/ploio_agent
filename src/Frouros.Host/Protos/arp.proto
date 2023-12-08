@@ -22,6 +22,7 @@ package cri;
 service ARP
 {
   rpc Resolve(EndPointTarget)       returns (ResolvedTarget);
+  rpc ResolveLocal(EndPointTarget)  returns (ResolvedTarget);
   rpc ResolveCallback(ARPEventArgs) returns (google.protobuf.Empty);
   rpc Register(ARPEvent)            returns (google.protobuf.Empty);
   rpc Unregister(ARPEvent)          returns (google.protobuf.Empty);

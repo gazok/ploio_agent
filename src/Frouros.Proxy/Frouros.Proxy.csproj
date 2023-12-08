@@ -13,8 +13,8 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProtoBuf Include="Protos\arp.proto">
-            <GrpcServices>Server;Client</GrpcServices>
+        <ProtoBuf Include="..\Frouros.Host\Protos\arp.proto" GrpcServices="Client">
+            <Link>Protos\arp.proto</Link>
         </ProtoBuf>
         <ProtoBuf Include="..\Frouros.Host\Protos\cri.proto" GrpcServices="Client">
             <Link>Protos\cri.proto</Link>

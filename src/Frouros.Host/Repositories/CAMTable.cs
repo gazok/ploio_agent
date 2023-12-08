@@ -13,13 +13,14 @@
 //    limitations under the License.
 
 using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
 using System.Net;
-using Frouros.Proxy.Repositories.Abstract;
+using Frouros.Host.Repositories.Abstract;
 using Grpc.Core;
 using Grpc.Net.Client;
 using BindingFlags = System.Reflection.BindingFlags;
 
-namespace Frouros.Proxy.Repositories;
+namespace Frouros.Host.Repositories;
 
 public class CAMTable : IServiceProvider, ICAMTable
 {
@@ -32,13 +33,13 @@ public class CAMTable : IServiceProvider, ICAMTable
 
         _channels = app
                    .Hosts
-                   .Select(ip => Net.Grpc.CreateChannel(new IPEndPoint(ip, port)))
+                   .Select(ip => Shared.Net.Grpc.CreateChannel(new IPEndPoint(ip, port)))
                    .ToArray();
     }
 
     object IServiceProvider.GetService(Type type)
     {
-        return _dict.GetOrAdd(type, static (type, channels) =>
+        return _dict.GetOrAdd(type, static ([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] type, channels) =>
         {
             var clients = channels
                          .Select(channel => type
@@ -54,7 +55,7 @@ public class CAMTable : IServiceProvider, ICAMTable
         }, _channels);
     }
 
-    public T[] GetService<T>() where T : ClientBase<T>
+    public T[] GetService<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] T>() where T : ClientBase<T>
     {
         return (T[])((IServiceProvider)this).GetService(typeof(T))!;
     }

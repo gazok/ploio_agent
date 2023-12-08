@@ -34,11 +34,8 @@ public class LogRouting(HttpClient http, ILogger<LogRouting> logger) : Backgroun
     {
         while (!token.IsCancellationRequested)
         {
-            var logs = _queue.Reader
-                             .ReadAllAsync(token)
-                             .ToBlockingEnumerable(cancellationToken: token)
-                             .SelectMany(e => e)
-                             .ToArray();
+            if (!_queue.Reader.TryRead(out var logs))
+                continue;
 
             using var response = await http.PostAsJsonAsync(
                 new Uri(Specials.CentralServer, "log"),
