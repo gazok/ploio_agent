@@ -6,10 +6,6 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
-    
-    <PropertyGroup>
-        <PublishTrimmed>true</PublishTrimmed>
-    </PropertyGroup>
 
     <ItemGroup>
         <Protobuf Include="Protos\arp.proto" GrpcServices="Server;Client"/>
