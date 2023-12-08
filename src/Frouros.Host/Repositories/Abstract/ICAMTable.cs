@@ -12,11 +12,12 @@
 //    See the License for the specific language governing permissions and
 //    limitations under the License.
 
+using System.Diagnostics.CodeAnalysis;
 using Grpc.Core;
 
-namespace Frouros.Proxy.Repositories.Abstract;
+namespace Frouros.Host.Repositories.Abstract;
 
 public interface ICAMTable : IDisposable, IAsyncDisposable
 {
-    public T[] GetService<T>() where T : ClientBase<T>;
+    public T[] GetService<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] T>() where T : ClientBase<T>;
 }

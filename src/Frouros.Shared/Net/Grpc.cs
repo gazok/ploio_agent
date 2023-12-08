@@ -14,10 +14,10 @@
 
 using System.Net;
 using System.Net.Sockets;
-using Frouros.Shared;
+using Frouros.Proxy.Net;
 using Grpc.Net.Client;
 
-namespace Frouros.Proxy.Net;
+namespace Frouros.Shared.Net;
 
 public static class Grpc
 {

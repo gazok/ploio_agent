@@ -16,9 +16,9 @@ using Frouros.Host;
 using Frouros.Proxy.Bridges.Abstract;
 using Frouros.Proxy.Models;
 using Frouros.Proxy.Models.Web;
-using Frouros.Proxy.Repositories.Abstract;
 using Frouros.Proxy.Services.Abstract;
 using Frouros.Proxy.Workers.Routing;
+using Frouros.Shared.Extensions;
 using Frouros.Shared.Imports;
 using Frouros.Shared.Models;
 using Google.Protobuf.WellKnownTypes;
@@ -28,12 +28,12 @@ namespace Frouros.Proxy.Workers;
 
 public class PVIWorker(
     IGrpcServiceProvider grpc,
-    IMembrane             membrane,
-    IARPTable            arp,
+    IMembrane            membrane,
     PacketRouting        packetRouting,
     LogRouting           logRouting) : BackgroundService
 {
     private readonly PVI.PVIClient _client = grpc.GetRequiredService<PVI.PVIClient>();
+    private readonly ARP.ARPClient _arp    = grpc.GetRequiredService<ARP.ARPClient>();
 
     protected override async Task ExecuteAsync(CancellationToken token)
     {
@@ -54,10 +54,16 @@ public class PVIWorker(
                 var prc    = PacketRegistryContainer.FromMemory(packet.Packet_.Memory);
 
                 await Task.WhenAll(
-                    arp.ResolveAsync(prc.Source, ResolveFlag.Confirm)
-                       .ContinueWith(task => src = task.Result, localToken),
-                    arp.ResolveAsync(prc.Destination, ResolveFlag.Confirm)
-                       .ContinueWith(task => dst = task.Result, localToken));
+                    _arp.ResolveAsync(
+                             new EndPointTarget { Ip = prc.Source.ToByteString() }, 
+                             cancellationToken: localToken)
+                        .ResponseAsync
+                        .ContinueWith(task => src = task.Result.Uid, localToken),
+                    _arp.ResolveAsync(
+                             new EndPointTarget { Ip = prc.Destination.ToByteString() }, 
+                             cancellationToken: localToken)
+                        .ResponseAsync
+                        .ContinueWith(task => dst = task.Result.Uid, localToken));
 
                 src ??= prc.Source.ToString();
                 dst ??= prc.Source.ToString();
