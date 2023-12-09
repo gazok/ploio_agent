@@ -80,27 +80,34 @@ public sealed class CRIWorker(ILogger<CRIWorker> logger, IPodAuthRepository repo
             return null;
         proc.WaitForExit();
 
-        using var json = JsonDocument.Parse(proc.StandardOutput.ReadToEnd());
-        var status = json.RootElement.GetProperty("status");
+        try
+        {
+            using var json   = JsonDocument.Parse(proc.StandardOutput.ReadToEnd());
+            var       status = json.RootElement.GetProperty("status");
 
-        var meta = status.GetProperty("metadata");
-        var name = meta.GetProperty("name").GetString();
-        var ns = meta.GetProperty("namespace").GetString();
-        var uid = meta.GetProperty("uid").GetString();
+            var meta = status.GetProperty("metadata");
+            var name = meta.GetProperty("name").GetString();
+            var ns   = meta.GetProperty("namespace").GetString();
+            var uid  = meta.GetProperty("uid").GetString();
 
-        var state = status.GetProperty("state").GetString();
-        var created = status.GetProperty("createdAt").GetDateTime();
+            var state   = status.GetProperty("state").GetString();
+            var created = status.GetProperty("createdAt").GetDateTime();
 
-        var net = status.GetProperty("network");
+            var net = status.GetProperty("network");
 
-        var ips = net
-            .GetProperty("additionalIps")
-            .EnumerateArray()
-            .Select(e => e.GetString())
-            .Prepend(net.GetProperty("ip").GetString())
-            .Where(ip => ip is not null)
-            .Select(sip => IPAddress.Parse(sip!));
+            var ips = net
+                     .GetProperty("additionalIps")
+                     .EnumerateArray()
+                     .Select(e => e.GetString())
+                     .Prepend(net.GetProperty("ip").GetString())
+                     .Where(ip => ip is not null)
+                     .Select(sip => IPAddress.Parse(sip!));
 
-        return new PodInfo(uid!, name!, ns!, state!, created, ips.ToArray());
+            return new PodInfo(uid!, name!, ns!, state!, created, ips.ToArray());
+        }
+        catch
+        {
+            return null;
+        }
     }
 }
