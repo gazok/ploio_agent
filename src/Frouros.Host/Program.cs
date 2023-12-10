@@ -10,7 +10,12 @@ using Microsoft.AspNetCore.Server.Kestrel.Core;
 GCSettings.LatencyMode = GCLatencyMode.SustainedLowLatency;
 
 if (!File.Exists(Specials.ConfigPath))
-    File.Copy(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "src.appsettings.json"), Specials.ConfigPath);
+{
+    File.Copy(
+        Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Properties/src.appsettings.json"),
+        Specials.ConfigPath
+    );
+}
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,26 +27,26 @@ builder.WebHost.ConfigureKestrel(options =>
         var dir = new DirectoryInfo(Specials.PipePath);
         if (!dir.Exists) dir.Create();
     }
-    
+
     ((Action<string, Action<ListenOptions>>)(
             OperatingSystem.IsWindows()
                 ? options.ListenNamedPipe
                 : options.ListenUnixSocket))
-        .Invoke(
+       .Invoke(
             Specials.PipePath,
             opt => opt.Protocols = HttpProtocols.Http2
         );
 });
 
 builder.Services
-    .AddSingleton<IApplicationInformation, ApplicationInformation>()
-    .AddSingleton<IARPTable, ARPTable>()
-    .AddSingleton<ICAMTable, CAMTable>()
-    .AddSingleton<IPodAuthRepository, PodAuthRepository>()
-    .AddSingleton<Netfilter>()
-    .AddHostedService<CRIWorker>()
-    .AddHostedService<PVIWorker>()
-    .AddGrpc();
+       .AddSingleton<IApplicationInformation, ApplicationInformation>()
+       .AddSingleton<IARPTable, ARPTable>()
+       .AddSingleton<ICAMTable, CAMTable>()
+       .AddSingleton<IPodAuthRepository, PodAuthRepository>()
+       .AddSingleton<Netfilter>()
+       .AddHostedService<CRIWorker>()
+       .AddHostedService<PVIWorker>()
+       .AddGrpc();
 
 var app = builder.Build();
 
