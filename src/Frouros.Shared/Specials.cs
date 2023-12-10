@@ -21,17 +21,20 @@ public static class Specials
         if (OperatingSystem.IsWindows())
         {
             var root = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
-            
+
             PipePath   = "frouros";
+            ConfigPath = Path.Combine(root, "Frouros/appsettings.json");
             ModulePath = Path.Combine(root, "Frouros/Modules");
         }
         else
         {
             PipePath   = "/opt/frouros.d/hc.sock";
+            ConfigPath = "/opt/frouros.d/appsettings.json";
             ModulePath = "/opt/frouros.d/mods";
         }
     }
-    
+
+    public static string ConfigPath { get; }
     public static string PipePath   { get; }
     public static string ModulePath { get; }
 
