@@ -24,8 +24,8 @@ builder.WebHost.ConfigureKestrel(options =>
 {
     if (!OperatingSystem.IsWindows())
     {
-        var dir = new DirectoryInfo(Specials.PipePath);
-        if (!dir.Exists) dir.Create();
+        var dir = new DirectoryInfo(Specials.PipePath).Parent;
+        if (!dir!.Exists) dir.Create();
     }
 
     ((Action<string, Action<ListenOptions>>)(
