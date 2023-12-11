@@ -23,6 +23,7 @@ namespace Frouros.Proxy.Models.Serialization;
 [JsonSerializable(typeof(Dictionary<uint, Packet>)),
  JsonSerializable(typeof(IPAddress)),
  JsonSerializable(typeof(Log[])),
+ JsonSerializable(typeof(IEnumerable<Log>)),
  JsonSerializable(typeof(ModuleInfo)),
  JsonSerializable(typeof(ModuleActivationInfo)),
  JsonSerializable(typeof(IEnumerable<ModuleInfo>)),

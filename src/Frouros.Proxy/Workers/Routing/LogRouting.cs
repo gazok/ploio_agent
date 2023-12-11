@@ -13,6 +13,7 @@
 //    limitations under the License.
 
 using System.Threading.Channels;
+using Frouros.Proxy.Collections;
 using Frouros.Proxy.Models.Serialization;
 using Frouros.Proxy.Models.Web;
 using Frouros.Shared;
@@ -34,8 +35,8 @@ public class LogRouting(HttpClient http, ILogger<LogRouting> logger) : Backgroun
     {
         while (!token.IsCancellationRequested)
         {
-            if (!_queue.Reader.TryRead(out var logs))
-                continue;
+            var jobs = await _queue.Reader.ReadAllAsync(token).AsTask();
+            var logs = jobs.SelectMany(job => job);
 
             using var response = await http.PostAsJsonAsync(
                 new Uri(Specials.CentralServer, "log"),
