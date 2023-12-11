@@ -13,6 +13,7 @@
 //    limitations under the License.
 
 using System.Threading.Channels;
+using Frouros.Proxy.Collections;
 using Frouros.Proxy.Models.Serialization;
 using Frouros.Proxy.Models.Web;
 using Frouros.Shared;
@@ -35,16 +36,12 @@ public class PacketRouting(HttpClient http, ILogger<PacketRouting> logger) : Bac
     {
         while (!token.IsCancellationRequested)
         {
-            var dictionary = _queue.Reader
-                 .ReadAllAsync(token)
-                 .ToBlockingEnumerable()
-                 .AsParallel()
-                 .SelectMany(dict => dict)
-                 .ToDictionary();
-
+            var jobs = await _queue.Reader.ReadAllAsync(token).AsTask();
+            var dict = jobs.SelectMany(dict => dict).ToDictionary();
+            
             using var response = await http.PostAsJsonAsync(
                 new Uri(Specials.CentralServer, "packet"),
-                dictionary,
+                dict,
                 SerializerOptions.Default,
                 cancellationToken: token
             );
