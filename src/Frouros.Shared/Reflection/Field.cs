@@ -17,7 +17,7 @@ public static class Field
         var gen = method.GetILGenerator();
         
         gen.Emit(OpCodes.Ldarg_0);
-        gen.Emit(OpCodes.Ldfld, field.Name);
+        gen.Emit(OpCodes.Ldfld, field);
         gen.Emit(OpCodes.Ret);
 
         return method.CreateDelegate<Func<TType, TField>>();
