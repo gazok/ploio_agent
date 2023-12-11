@@ -9,17 +9,15 @@ public static class Field
     {
         var name = $"{field.ReflectedType?.FullName}.set_{field.Name}";
 
-        var method = new DynamicMethod(name, null, new[]
+        var method = new DynamicMethod(name, typeof(TField), new[]
         {
-            typeof(TType),
-            typeof(TField)
-        }, true);
+            typeof(TType)
+        }, typeof(TType), true);
 
         var gen = method.GetILGenerator();
         
         gen.Emit(OpCodes.Ldarg_0);
-        gen.Emit(OpCodes.Ldarg_1);
-        gen.Emit(OpCodes.Ldfld);
+        gen.Emit(OpCodes.Ldfld, field);
         gen.Emit(OpCodes.Ret);
 
         return method.CreateDelegate<Func<TType, TField>>();
