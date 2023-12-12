@@ -1,4 +1,5 @@
 using System.Runtime;
+using System.Runtime.InteropServices;
 using Frouros.Host.Bridges;
 using Frouros.Host.Imports;
 using Frouros.Host.Repositories;
@@ -27,6 +28,9 @@ builder.WebHost.ConfigureKestrel(options =>
     {
         var dir = new DirectoryInfo(Specials.PipePath).Parent;
         if (!dir!.Exists) dir.Create();
+
+        var file = new FileInfo(Specials.PipePath);
+        if (file.Exists) file.Delete();
     }
 
     ((Action<string, Action<ListenOptions>>)(
@@ -37,15 +41,6 @@ builder.WebHost.ConfigureKestrel(options =>
             Specials.PipePath,
             opt => opt.Protocols = HttpProtocols.Http2
         );
-
-    var user = builder.Configuration.GetValue<uint>("User");
-    var group = builder.Configuration.GetValue<uint>("Group");
-
-    if (Native.ChangeOwner(Specials.PipePath, user, group) != 0 ||
-        Native.ChangeAccessControl(Specials.PipePath, 0x1B0 /* 660 */) != 0)
-    {
-        Console.Error.WriteLine(Native.GetLastError());
-    }
 });
 
 builder.Services
@@ -56,6 +51,7 @@ builder.Services
        .AddSingleton<Netfilter>()
        .AddHostedService<CRIWorker>()
        .AddHostedService<PVIWorker>()
+       .AddHostedService<PrivilegeWorker>()
        .AddGrpc();
 
 var app = builder.Build();
