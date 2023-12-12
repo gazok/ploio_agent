@@ -1,5 +1,7 @@
 using System.Runtime;
+using System.Runtime.InteropServices;
 using Frouros.Host.Bridges;
+using Frouros.Host.Imports;
 using Frouros.Host.Repositories;
 using Frouros.Host.Repositories.Abstract;
 using Frouros.Host.Services;
@@ -26,6 +28,9 @@ builder.WebHost.ConfigureKestrel(options =>
     {
         var dir = new DirectoryInfo(Specials.PipePath).Parent;
         if (!dir!.Exists) dir.Create();
+
+        var file = new FileInfo(Specials.PipePath);
+        if (file.Exists) file.Delete();
     }
 
     ((Action<string, Action<ListenOptions>>)(
@@ -46,6 +51,7 @@ builder.Services
        .AddSingleton<Netfilter>()
        .AddHostedService<CRIWorker>()
        .AddHostedService<PVIWorker>()
+       .AddHostedService<PrivilegeWorker>()
        .AddGrpc();
 
 var app = builder.Build();
