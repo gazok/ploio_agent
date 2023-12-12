@@ -22,6 +22,8 @@ public class PodRouting(HttpClient http, ILogger<PodRouting> logger, IPodAuthRep
 {
     protected override async Task ExecuteAsync(CancellationToken token)
     {
+        logger.LogTrace("{} is started", GetType().Name);
+        
         while (!token.IsCancellationRequested)
         {
             using var response = await http.PostAsJsonAsync(

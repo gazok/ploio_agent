@@ -5,10 +5,12 @@ using Frouros.Shared;
 
 namespace Frouros.Proxy.Workers;
 
-public class VMAWorker(HttpClient http, IModuleRepository repo) : BackgroundService
+public class VMAWorker(HttpClient http, IModuleRepository repo, ILogger<VMAWorker> logger) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken token)
     {
+        logger.LogTrace("{} is started", GetType().Name);
+        
         while (!token.IsCancellationRequested)
         {
             foreach (var response in await Task.WhenAll(
