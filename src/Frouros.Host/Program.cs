@@ -1,5 +1,6 @@
 using System.Runtime;
 using Frouros.Host.Bridges;
+using Frouros.Host.Imports;
 using Frouros.Host.Repositories;
 using Frouros.Host.Repositories.Abstract;
 using Frouros.Host.Services;
@@ -36,6 +37,12 @@ builder.WebHost.ConfigureKestrel(options =>
             Specials.PipePath,
             opt => opt.Protocols = HttpProtocols.Http2
         );
+
+    var user = builder.Configuration.GetValue<uint>("User");
+    var group = builder.Configuration.GetValue<uint>("Group");
+    
+    Native.ChangeOwner(Specials.PipePath, user, group);
+    Native.ChangeAccessControl(Specials.PipePath, 0x1B0 /* 660 */);
 });
 
 builder.Services
