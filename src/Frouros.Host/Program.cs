@@ -40,9 +40,12 @@ builder.WebHost.ConfigureKestrel(options =>
 
     var user = builder.Configuration.GetValue<uint>("User");
     var group = builder.Configuration.GetValue<uint>("Group");
-    
-    Native.ChangeOwner(Specials.PipePath, user, group);
-    Native.ChangeAccessControl(Specials.PipePath, 0x1B0 /* 660 */);
+
+    if (Native.ChangeOwner(Specials.PipePath, user, group) != 0 ||
+        Native.ChangeAccessControl(Specials.PipePath, 0x1B0 /* 660 */) != 0)
+    {
+        Console.Error.WriteLine(Native.GetLastError());
+    }
 });
 
 builder.Services
