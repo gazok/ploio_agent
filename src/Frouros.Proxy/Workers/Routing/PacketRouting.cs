@@ -34,6 +34,8 @@ public class PacketRouting(HttpClient http, ILogger<PacketRouting> logger) : Bac
 
     protected override async Task ExecuteAsync(CancellationToken token)
     {
+        logger.LogTrace("{} is started", GetType().Name);
+        
         while (!token.IsCancellationRequested)
         {
             var jobs = await _queue.Reader.ReadAllAsync(token).AsTask();

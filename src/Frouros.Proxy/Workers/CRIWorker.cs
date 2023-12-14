@@ -22,12 +22,14 @@ using Google.Protobuf.WellKnownTypes;
 
 namespace Frouros.Proxy.Workers;
 
-public class CRIWorker(IGrpcServiceProvider grpc, IPodAuthRepository repo) : BackgroundService
+public class CRIWorker(IGrpcServiceProvider grpc, IPodAuthRepository repo, ILogger<CRIWorker> logger) : BackgroundService
 {
     private readonly CRI.CRIClient _client = grpc.GetRequiredService<CRI.CRIClient>();
 
     protected override async Task ExecuteAsync(CancellationToken token)
     {
+        logger.LogTrace("{} is started", GetType().Name);
+        
         while (!token.IsCancellationRequested)
         {
             var pods = await _client.QueryAllAsync(new Empty(), cancellationToken: token);

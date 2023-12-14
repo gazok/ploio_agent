@@ -30,13 +30,16 @@ public class PVIWorker(
     IGrpcServiceProvider grpc,
     IMembrane            membrane,
     PacketRouting        packetRouting,
-    LogRouting           logRouting) : BackgroundService
+    LogRouting           logRouting,
+    ILogger<PVIWorker>   logger) : BackgroundService
 {
     private readonly PVI.PVIClient _client = grpc.GetRequiredService<PVI.PVIClient>();
     private readonly ARP.ARPClient _arp    = grpc.GetRequiredService<ARP.ARPClient>();
 
     protected override async Task ExecuteAsync(CancellationToken token)
     {
+        logger.LogTrace("{} is started", GetType().Name);
+        
         while (!token.IsCancellationRequested)
         {
             var remains = await _client.GetRemainsAsync(new Empty(), cancellationToken: token);
