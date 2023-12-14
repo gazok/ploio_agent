@@ -56,6 +56,8 @@ public class PacketRouting(HttpClient http, ILogger<PacketRouting> logger) : Bac
             {
                 logger.LogError(e, "Couldn't route pods-data; real-time data will be lost");
             }
+
+            await Task.Delay(Specials.PushInterval, token);
         }
     }
 }

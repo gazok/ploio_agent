@@ -34,6 +34,8 @@ public static class Specials
         }
     }
 
+    public static int PushInterval { get; } = 500;
+    
     public static string ConfigPath { get; }
     public static string PipePath   { get; }
     public static string ModulePath { get; }

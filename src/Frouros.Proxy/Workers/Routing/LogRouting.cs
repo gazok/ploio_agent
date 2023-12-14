@@ -55,6 +55,8 @@ public class LogRouting(HttpClient http, ILogger<LogRouting> logger) : Backgroun
             {
                 logger.LogError(e, "Couldn't route log-data; real-time data will be lost");
             }
+
+            await Task.Delay(Specials.PushInterval, token);
         }
     }
 }

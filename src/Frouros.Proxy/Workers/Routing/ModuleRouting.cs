@@ -41,6 +41,8 @@ public class ModuleRouting(HttpClient http, ILogger<ModuleRouting> logger, IModu
             {
                 logger.LogError(e, "Couldn't route module-data; real-time data will be lost");
             }
+
+            await Task.Delay(Specials.PushInterval, token);
         }
     }
 }

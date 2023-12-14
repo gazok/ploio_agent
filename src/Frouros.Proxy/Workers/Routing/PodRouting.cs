@@ -40,6 +40,8 @@ public class PodRouting(HttpClient http, ILogger<PodRouting> logger, IPodAuthRep
             {
                 logger.LogError(e, "Couldn't route pods-data; real-time data will be lost");
             }   
+
+            await Task.Delay(Specials.PushInterval, token);
         }
     }
 }
