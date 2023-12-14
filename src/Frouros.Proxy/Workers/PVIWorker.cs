@@ -39,7 +39,7 @@ public class PVIWorker(
     protected override async Task ExecuteAsync(CancellationToken token)
     {
         logger.LogTrace("{} is started", GetType().Name);
-        
+
         while (!token.IsCancellationRequested)
         {
             var remains = await _client.GetRemainsAsync(new Empty(), cancellationToken: token);
@@ -58,12 +58,12 @@ public class PVIWorker(
 
                 await Task.WhenAll(
                     _arp.ResolveAsync(
-                             new EndPointTarget { Ip = prc.Source.ToByteString() }, 
+                             new EndPointTarget { Ip = prc.Source.ToByteString() },
                              cancellationToken: localToken)
                         .ResponseAsync
                         .ContinueWith(task => src = task.Result.Uid, localToken),
                     _arp.ResolveAsync(
-                             new EndPointTarget { Ip = prc.Destination.ToByteString() }, 
+                             new EndPointTarget { Ip = prc.Destination.ToByteString() },
                              cancellationToken: localToken)
                         .ResponseAsync
                         .ContinueWith(task => dst = task.Result.Uid, localToken));
@@ -82,17 +82,18 @@ public class PVIWorker(
                 );
 
                 var tv       = new Timeval((nint)packet.Timestamp.Seconds, packet.Timestamp.Nanos);
-                var messages = membrane.Transmit(packet.Uid, prc.Registry, tv).ToArray();
+                var messages = membrane.Transmit(packet.Uid, prc, tv).ToArray();
 
-                logs[i] = messages.Select(msg => new Log(
+                logs[i] = messages.Where(msg => msg.Code > (ushort)VerdictCode.Warning).Select(msg => new Log(
                         msg.Code,
                         msg.Message,
                         msg.Module.Info.GUID.ToString("D"),
                         new[]
                         {
-                            new Reference(ReferenceSource.Packet, packet.Uid.ToString(), Array.Empty<string>()),
-                            new Reference(ReferenceSource.Pod,    src,                   new[] { "Source" }),
-                            new Reference(ReferenceSource.Pod,    dst,                   new[] { "Destination" })
+                            new Reference(ReferenceSource.Packet, packet.Uid.ToString(),
+                                Array.Empty<string>()),
+                            new Reference(ReferenceSource.Pod, src, new[] { "Source" }),
+                            new Reference(ReferenceSource.Pod, dst, new[] { "Destination" })
                         }
                     )
                 );

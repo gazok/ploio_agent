@@ -12,11 +12,12 @@
 //    See the License for the specific language governing permissions and
 //    limitations under the License.
 
+using System.Net;
 using Frouros.Shared.Models;
 
 namespace Frouros.Proxy.Repositories.Abstract;
 
 public interface IPodAuthRepository
 {
-    public IReadOnlyDictionary<string, PodInfo> Auth { get; set; }
+    public IReadOnlyDictionary<IPAddress, PodInfo> Auth { get; set; }
 }
