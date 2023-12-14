@@ -22,11 +22,13 @@ public class PodRouting(HttpClient http, ILogger<PodRouting> logger, IPodAuthRep
 {
     protected override async Task ExecuteAsync(CancellationToken token)
     {
+        logger.LogTrace("{} is started", GetType().Name);
+        
         while (!token.IsCancellationRequested)
         {
             using var response = await http.PostAsJsonAsync(
-                new Uri(Specials.CentralServer, "pod"), 
-                cri.Auth,
+                new Uri(Specials.CentralServer, "pod"),
+                cri.Auth.Values.ToDictionary(value => value.UId),
                 SerializerOptions.Default,
                 cancellationToken: token);
 
@@ -38,6 +40,8 @@ public class PodRouting(HttpClient http, ILogger<PodRouting> logger, IPodAuthRep
             {
                 logger.LogError(e, "Couldn't route pods-data; real-time data will be lost");
             }   
+
+            await Task.Delay(Specials.PushInterval, token);
         }
     }
 }

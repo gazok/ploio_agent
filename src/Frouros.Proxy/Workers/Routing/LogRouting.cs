@@ -13,6 +13,7 @@
 //    limitations under the License.
 
 using System.Threading.Channels;
+using Frouros.Proxy.Collections;
 using Frouros.Proxy.Models.Serialization;
 using Frouros.Proxy.Models.Web;
 using Frouros.Shared;
@@ -32,10 +33,12 @@ public class LogRouting(HttpClient http, ILogger<LogRouting> logger) : Backgroun
 
     protected override async Task ExecuteAsync(CancellationToken token)
     {
+        logger.LogTrace("{} is started", GetType().Name);
+        
         while (!token.IsCancellationRequested)
         {
-            if (!_queue.Reader.TryRead(out var logs))
-                continue;
+            var jobs = await _queue.Reader.ReadAllAsync(token).AsTask();
+            var logs = jobs.SelectMany(job => job);
 
             using var response = await http.PostAsJsonAsync(
                 new Uri(Specials.CentralServer, "log"),
@@ -52,6 +55,8 @@ public class LogRouting(HttpClient http, ILogger<LogRouting> logger) : Backgroun
             {
                 logger.LogError(e, "Couldn't route log-data; real-time data will be lost");
             }
+
+            await Task.Delay(Specials.PushInterval, token);
         }
     }
 }

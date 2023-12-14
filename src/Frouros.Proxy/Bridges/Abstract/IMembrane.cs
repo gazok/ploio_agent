@@ -19,5 +19,5 @@ namespace Frouros.Proxy.Bridges.Abstract;
 
 public interface IMembrane
 {
-    public IEnumerable<ModuleMessage> Transmit(uint id, PacketRegistry pkt, Timeval tv);
+    public IEnumerable<ModuleMessage> Transmit(uint id, PacketRegistryContainer pkt, Timeval tv);
 }

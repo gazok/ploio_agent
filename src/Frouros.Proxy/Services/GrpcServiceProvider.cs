@@ -29,7 +29,6 @@ public class GrpcServiceProvider : IGrpcServiceProvider
     {
         logger.LogTrace("Creating gRPC channels...");
         _ch = Shared.Net.Grpc.CreateChannel();
-        logger.LogTrace("gRPC channels established");
 
         _services = new Dictionary<Type, ClientBase>
         {
@@ -37,6 +36,7 @@ public class GrpcServiceProvider : IGrpcServiceProvider
             [typeof(PVI.PVIClient)] = new PVI.PVIClient(_ch),
             [typeof(ARP.ARPClient)] = new ARP.ARPClient(_ch)
         }.ToFrozenDictionary();
+        logger.LogTrace("gRPC channels established");
     }
 
     public object? GetService(Type serviceType)

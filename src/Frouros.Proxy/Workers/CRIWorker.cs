@@ -22,31 +22,37 @@ using Google.Protobuf.WellKnownTypes;
 
 namespace Frouros.Proxy.Workers;
 
-public class CRIWorker(IGrpcServiceProvider grpc, IPodAuthRepository repo) : BackgroundService
+public class CRIWorker(IGrpcServiceProvider grpc, IPodAuthRepository repo, ILogger<CRIWorker> logger) : BackgroundService
 {
     private readonly CRI.CRIClient _client = grpc.GetRequiredService<CRI.CRIClient>();
 
     protected override async Task ExecuteAsync(CancellationToken token)
     {
+        logger.LogTrace("{} is started", GetType().Name);
+        
         while (!token.IsCancellationRequested)
         {
             var pods = await _client.QueryAllAsync(new Empty(), cancellationToken: token);
         
-            var list = new List<PodInfo>(pods.Pods.Count);
+            var list = new Dictionary<IPAddress, PodInfo>(pods.Pods.Count);
             foreach (var uid in pods.Pods)
             {
                 var pod = await _client.QueryAsync(new PodRequest { Uid = uid }, cancellationToken: token);
-                list.Add(new PodInfo(
-                    pod.Uid.Replace("-", string.Empty), 
-                    pod.Name, 
-                    pod.Namespace, 
-                    pod.State, 
-                    pod.CreatedAt.ToDateTime(), 
-                    pod.Network.Select(bs => new IPAddress(bs.Span)).ToArray())
-                );
+                var ips = pod.Network.Select(bs => new IPAddress(bs.Span)).ToArray();
+                foreach (var ip in ips)
+                {
+                    list.Add(ip, new PodInfo(
+                        pod.Uid.Replace("-", string.Empty), 
+                        pod.Name, 
+                        pod.Namespace, 
+                        pod.State, 
+                        pod.CreatedAt.ToDateTime(), 
+                        ips)
+                    );
+                }
             }
 
-            repo.Auth = list.ToFrozenDictionary(info => info.UId);
+            repo.Auth = list.ToFrozenDictionary();
 
             await Task.Delay(500, token);
         }
