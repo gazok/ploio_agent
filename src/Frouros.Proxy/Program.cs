@@ -8,43 +8,36 @@ using Frouros.Proxy.Services;
 using Frouros.Proxy.Services.Abstract;
 using Frouros.Proxy.Workers;
 using Frouros.Proxy.Workers.Routing;
+using Microsoft.AspNetCore;
 
 GCSettings.LatencyMode = GCLatencyMode.SustainedLowLatency;
 
-var builder = WebApplication.CreateBuilder(args);
+var builder = Host.CreateDefaultBuilder(args);
 
-builder.Services
-        
+builder.ConfigureServices(services =>
+    services
        .AddSingleton<HttpClient>(_ => new HttpClient(new SocketsHttpHandler
-       {
-           AllowAutoRedirect = true,
-           AutomaticDecompression = DecompressionMethods.All,
-           EnableMultipleHttp2Connections = true
-       }, true))
-              
+        {
+            AllowAutoRedirect              = true,
+            AutomaticDecompression         = DecompressionMethods.All,
+            EnableMultipleHttp2Connections = true
+        }, true))
        .AddSingleton<IMembrane, Membrane>()
-        
-       .AddSingleton<IApplicationInformation, ApplicationInformation>()
-       .AddSingleton<IARPTable, ARPTable>()
-       .AddSingleton<ICAMTable, CAMTable>()
        .AddSingleton<IModuleRepository, ModuleRepository>()
        .AddSingleton<IPodAuthRepository, PodAuthRepository>()
-        
        .AddSingleton<IGrpcServiceProvider, GrpcServiceProvider>()
-        
-       .AddHostedService<LogRouting>()
-       .AddHostedService<ModuleRouting>()
-       .AddHostedService<PacketRouting>()
-       .AddHostedService<PodRouting>()
-        
+       .AddSingleton<LogRouting>()
+       .AddSingleton<ModuleRouting>()
+       .AddSingleton<PacketRouting>()
+       .AddSingleton<PodRouting>()
+       .AddHostedService<BackgroundServiceWrapper<LogRouting>>()
+       .AddHostedService<BackgroundServiceWrapper<ModuleRouting>>()
+       .AddHostedService<BackgroundServiceWrapper<PacketRouting>>()
+       .AddHostedService<BackgroundServiceWrapper<PodRouting>>()
        .AddHostedService<CRIWorker>()
        .AddHostedService<PVIWorker>()
-       .AddHostedService<VMAWorker>()
-        
-       .AddGrpc();
+       .AddHostedService<VMAWorker>());
 
 var app = builder.Build();
-
-app.MapGrpcService<ARPService>();
 
 app.Run();

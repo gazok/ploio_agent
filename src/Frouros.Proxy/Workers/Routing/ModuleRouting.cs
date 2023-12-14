@@ -22,6 +22,8 @@ public class ModuleRouting(HttpClient http, ILogger<ModuleRouting> logger, IModu
 {
     protected override async Task ExecuteAsync(CancellationToken token)
     {
+        logger.LogTrace("{} is started", GetType().Name);
+        
         while (!token.IsCancellationRequested)
         {
             using var response = await http.PostAsJsonAsync(
@@ -39,6 +41,8 @@ public class ModuleRouting(HttpClient http, ILogger<ModuleRouting> logger, IModu
             {
                 logger.LogError(e, "Couldn't route module-data; real-time data will be lost");
             }
+
+            await Task.Delay(Specials.PushInterval, token);
         }
     }
 }

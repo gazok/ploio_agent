@@ -14,29 +14,34 @@
 
 using System.Collections.Concurrent;
 using System.Net;
-using Frouros.Host;
-using Frouros.Proxy.Repositories.Abstract;
+using Frouros.Host.Repositories.Abstract;
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using Grpc.Net.Client;
 
-namespace Frouros.Proxy.Services;
+namespace Frouros.Host.Services;
 
 public class ARPService(IPodAuthRepository repo, IARPTable arp, ILogger<ARPService> logger) : ARP.ARPBase
 {
-    private readonly ConcurrentDictionary<IPEndPoint, (GrpcChannel Channel, ARP.ARPClient Service)> _dict   = new();
-    private readonly ConcurrentDictionary<string, ConcurrentDictionary<IPEndPoint, ARP.ARPClient>>  _events = new();
+    private readonly ConcurrentDictionary<IPEndPoint, (GrpcChannel Ch, ARP.ARPClient Svc)>         _table  = new();
+    private readonly ConcurrentDictionary<string, ConcurrentDictionary<IPEndPoint, ARP.ARPClient>> _events = new();
 
-    public override Task<ResolvedTarget> Resolve(EndPointTarget request, ServerCallContext context)
+    public override async Task<ResolvedTarget> Resolve(EndPointTarget request, ServerCallContext context)
+    {
+        var id = await arp.ResolveAsync(new IPAddress(request.Ip.Span), ResolveFlag.Confirm);
+        return new ResolvedTarget { Uid = id };
+    }
+    
+    public override Task<ResolvedTarget> ResolveLocal(EndPointTarget request, ServerCallContext context)
     {
         var uid = repo.Auth.Values
-                      .First(pod => pod.Network.Any(
+                      .FirstOrDefault(pod => pod.Network.Any(
                                net => net.Equals(
                                    new IPAddress(request.Ip.Span)
                                )
                            )
                        )
-                      .UId;
+                     ?.UId;
 
         return Task.FromResult(new ResolvedTarget { Uid = uid });
     }
@@ -55,9 +60,9 @@ public class ARPService(IPodAuthRepository repo, IARPTable arp, ILogger<ARPServi
     {
         var ep = new IPEndPoint(new IPAddress(request.Ip.Span), (int)request.Port);
 
-        var (_, client) = _dict.GetOrAdd(ep, static ep =>
+        var (_, client) = _table.GetOrAdd(ep, static ep =>
         {
-            var ch     = Net.Grpc.CreateChannel(ep);
+            var ch     = Shared.Net.Grpc.CreateChannel(ep);
             var client = new ARP.ARPClient(ch);
             return (ch, client);
         });

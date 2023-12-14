@@ -15,6 +15,9 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security;
+using System.Security.AccessControl;
+using System.Security.Principal;
+using System.Text;
 using Frouros.Shared.Imports;
 
 namespace Frouros.Host.Imports;
@@ -48,6 +51,24 @@ public static unsafe partial class Native
     {
         var errno = Marshal.GetLastWin32Error();
         return Marshal.PtrToStringUTF8(strerror(errno)) ?? string.Empty;
+    }
+
+    internal static int ChangeAccessControl(string path, int acl)
+    {
+        var data = Encoding.UTF8.GetBytes(path);
+        fixed (byte* p = data)
+        {
+            return chmod(p, acl);
+        }
+    }
+
+    internal static int ChangeOwner(string path, uint user, uint group)
+    {
+        var data = Encoding.UTF8.GetBytes(path);
+        fixed (byte* p = data)
+        {
+            return chown(p, user, group);
+        }
     }
 
     [LibraryImport("netfilter_queue", SetLastError = true)]
@@ -114,6 +135,14 @@ public static unsafe partial class Native
         uint  verdict,
         uint  dataLen,
         byte* buf);
+
+    // ReSharper disable once InconsistentNaming
+    [LibraryImport("libc.so.6", SetLastError = true)]
+    private static partial int chmod(byte* path, int mod);
+
+    // ReSharper disable once InconsistentNaming
+    [LibraryImport("libc.so.6", SetLastError = true)]
+    private static partial int chown(byte* path, uint owner, uint group);
 
     // ReSharper disable once InconsistentNaming
     [LibraryImport("libc.so.6", SetLastError = true)]

@@ -27,8 +27,17 @@ struct __pktreg {
 
 typedef void (*setres_t)(uint16_t code, const char* msg);
 
-void initialize(setres_t setres);
-void entrypoint(uint32_t id, struct timeval tv, pktreg_t* pkt);
+void initialize(
+  setres_t setres
+);
+
+void entrypoint(
+  uint32_t id, 
+  struct timeval tv,
+  const char* src, 
+  const char* dst,  
+  pktreg_t* pkt
+);
 ```
 
 ## Code

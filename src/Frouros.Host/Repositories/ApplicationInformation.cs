@@ -13,11 +13,22 @@
 //    limitations under the License.
 
 using System.Net;
-using Frouros.Shared.Models;
+using Frouros.Host.Repositories.Abstract;
 
-namespace Frouros.Proxy.Repositories.Abstract;
+namespace Frouros.Host.Repositories;
 
-public interface IPodAuthRepository
+public class ApplicationInformation : IApplicationInformation
 {
-    public IReadOnlyDictionary<IPAddress, PodInfo> Auth { get; set; }
+    public uint        Port  { get; }
+    public IPAddress[] Hosts { get; }
+
+    public ApplicationInformation(IConfiguration config)
+    {
+        Port = (uint)config.GetValue<int>("Port");
+        Hosts = config
+               .GetRequiredSection("Hosts")
+               .Get<string[]>()!
+               .Select(IPAddress.Parse)
+               .ToArray();
+    }
 }

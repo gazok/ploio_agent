@@ -13,6 +13,7 @@
 //    limitations under the License.
 
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Threading.Channels;
 using Frouros.Proxy.Bridges.Abstract;
 using Frouros.Proxy.Models;
@@ -28,7 +29,7 @@ public delegate void ModuleResultSetter(ushort code, [MarshalAs(UnmanagedType.LP
 public delegate void ModuleInitializer(ModuleResultSetter res);
 
 [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-public unsafe delegate void ModuleEntrypoint(uint id, Timeval tv, PacketRegistry* pkt);
+public unsafe delegate void ModuleEntrypoint(uint id, Timeval tv, byte* src, byte* dst, PacketRegistry* pkt);
 
 public class Membrane : IMembrane
 {
@@ -40,11 +41,13 @@ public class Membrane : IMembrane
         }
     );
 
-    private readonly IModuleRepository _repository;
+    private readonly IModuleRepository  _repository;
+    private readonly IPodAuthRepository _auth;
 
-    public Membrane(IModuleRepository repository)
+    public Membrane(IModuleRepository repository, IPodAuthRepository auth)
     {
-        _repository                 =  repository;
+        _repository = repository;
+        _auth       = auth;
         _repository.MessageReceived += (sender, args) =>
         {
             // do NOT await for this operation; it causes bottleneck
@@ -52,12 +55,18 @@ public class Membrane : IMembrane
         };
     }
 
-    public IEnumerable<ModuleMessage> Transmit(uint id, PacketRegistry pkt, Timeval tv)
+    public IEnumerable<ModuleMessage> Transmit(uint id, PacketRegistryContainer pkt, Timeval tv)
     {
         unsafe
         {
-            foreach (var lib in _repository.Handles)
-                lib.Entrypoint!.Invoke(id, tv, &pkt);
+            var src = Encoding.UTF8.GetBytes(_auth.Auth[pkt.Source].UId);
+            var dst = Encoding.UTF8.GetBytes(_auth.Auth[pkt.Destination].UId);
+            var reg = pkt.Registry;
+            
+            fixed (byte* pSrc = src)
+            fixed (byte* pDst = dst)
+                foreach (var lib in _repository.Handles)
+                    lib.Entrypoint!.Invoke(id, tv, pSrc, pDst, &reg);
         }
 
         return _queue.Reader.ReadAllAsync().ToBlockingEnumerable();

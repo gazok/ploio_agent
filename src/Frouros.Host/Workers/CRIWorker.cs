@@ -16,42 +16,14 @@ using System.Collections.Frozen;
 using System.Diagnostics;
 using System.Net;
 using System.Text.Json;
+using Frouros.Host.Repositories.Abstract;
 using Frouros.Shared.Models;
 
 namespace Frouros.Host.Workers;
 
-public sealed class CRIWorker : IHostedService
+public sealed class CRIWorker(ILogger<CRIWorker> logger, IPodAuthRepository repo) : IHostedService
 {
-    private class PodPairNetworkEqualityComparer : IEqualityComparer<KeyValuePair<string, PodInfo>>
-    {
-        public static readonly PodPairNetworkEqualityComparer Default = new();
-        
-        public bool Equals(KeyValuePair<string, PodInfo> x, KeyValuePair<string, PodInfo> y)
-        {
-            return x.Value.Network.SequenceEqual(y.Value.Network);
-        }
-
-        public int GetHashCode(KeyValuePair<string, PodInfo> obj)
-        {
-            return obj.Value.Network.GetHashCode();
-        }
-    }
-
-    public delegate void CRIUpdateEvent(string uid, IPAddress[] diff);
-
-    private bool _init;
-
-    private Timer?                             _timer;
-    private FrozenDictionary<string, PodInfo>? _infos;
-
-    private readonly ILogger<CRIWorker> _logger;
-
-    public CRIWorker(ILogger<CRIWorker> logger)
-    {
-        _logger = logger;
-    }
-
-    public event CRIUpdateEvent? Updated;
+    private Timer? _timer;
 
     public Task StartAsync(CancellationToken token)
     {
@@ -59,27 +31,15 @@ public sealed class CRIWorker : IHostedService
         {
             try
             {
-                _init = true;
-
-                var tmp = QueryIds()
-                         .Select(QueryPod)
-                         .Where(info => info is not null)
-                         .Cast<PodInfo>()
-                         .ToFrozenDictionary(info => info.UId);
-
-                if (_infos is not null)
-                {
-                    foreach (var (uid, diff) in tmp.Except(_infos, PodPairNetworkEqualityComparer.Default))
-                    {
-                        Updated?.Invoke(uid, diff.Network);
-                    }
-                }
-                
-                _infos = tmp;
+                repo.Auth = QueryIds()
+                    .Select(QueryPod)
+                    .Where(info => info is not null)
+                    .Cast<PodInfo>()
+                    .ToFrozenDictionary(info => info.UId);
             }
             catch (Exception e)
             {
-                _logger.LogError(e, "Couldn't fetch CRI information; CRI-information-table will not be updated");
+                logger.LogError(e, "Couldn't fetch CRI information; CRI-information-table will not be updated");
             }
         }, null, 0, 500);
         return Task.CompletedTask;
@@ -91,22 +51,13 @@ public sealed class CRIWorker : IHostedService
         return Task.CompletedTask;
     }
 
-    public FrozenDictionary<string, PodInfo> Query()
-    {
-        while (!_init)
-        {
-        }
-
-        return _infos!;
-    }
-
     private static IEnumerable<string> QueryIds()
     {
         var info = new ProcessStartInfo("crictl", "pods -q")
         {
-            CreateNoWindow         = true,
+            CreateNoWindow = true,
             RedirectStandardOutput = true,
-            UseShellExecute        = false
+            UseShellExecute = false
         };
         using var proc = Process.Start(info);
         if (proc is null)
@@ -120,36 +71,43 @@ public sealed class CRIWorker : IHostedService
     {
         var info = new ProcessStartInfo("crictl", new[] { "inspectp", id })
         {
-            CreateNoWindow         = true,
+            CreateNoWindow = true,
             RedirectStandardOutput = true,
-            UseShellExecute        = false
+            UseShellExecute = false
         };
         using var proc = Process.Start(info);
         if (proc is null)
             return null;
         proc.WaitForExit();
 
-        using var json   = JsonDocument.Parse(proc.StandardOutput.ReadToEnd());
-        var       status = json.RootElement.GetProperty("status");
+        try
+        {
+            using var json   = JsonDocument.Parse(proc.StandardOutput.ReadToEnd());
+            var       status = json.RootElement.GetProperty("status");
 
-        var meta = status.GetProperty("metadata");
-        var name = meta.GetProperty("name").GetString();
-        var ns   = meta.GetProperty("namespace").GetString();
-        var uid  = meta.GetProperty("uid").GetString();
+            var meta = status.GetProperty("metadata");
+            var name = meta.GetProperty("name").GetString();
+            var ns   = meta.GetProperty("namespace").GetString();
+            var uid  = meta.GetProperty("uid").GetString();
 
-        var state   = status.GetProperty("state").GetString();
-        var created = status.GetProperty("createdAt").GetDateTime();
+            var state   = status.GetProperty("state").GetString();
+            var created = status.GetProperty("createdAt").GetDateTime();
 
-        var net = status.GetProperty("network");
+            var net = status.GetProperty("network");
 
-        var ips = net
-                 .GetProperty("additionalIps")
-                 .EnumerateArray()
-                 .Select(e => e.GetString())
-                 .Prepend(net.GetProperty("ip").GetString())
-                 .Where(ip => ip is not null)
-                 .Select(sip => IPAddress.Parse(sip!));
+            var ips = net
+                     .GetProperty("additionalIps")
+                     .EnumerateArray()
+                     .Select(e => e.GetString())
+                     .Prepend(net.GetProperty("ip").GetString())
+                     .Where(ip => ip is not null)
+                     .Select(sip => IPAddress.Parse(sip!));
 
-        return new PodInfo(uid!, name!, ns!, state!, created, ips.ToArray());
+            return new PodInfo(uid!, name!, ns!, state!, created, ips.ToArray());
+        }
+        catch
+        {
+            return null;
+        }
     }
 }

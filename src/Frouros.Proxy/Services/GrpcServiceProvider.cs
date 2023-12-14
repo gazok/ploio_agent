@@ -25,15 +25,18 @@ public class GrpcServiceProvider : IGrpcServiceProvider
     private readonly GrpcChannel                        _ch;
     private readonly FrozenDictionary<Type, ClientBase> _services;
 
-    public GrpcServiceProvider()
+    public GrpcServiceProvider(ILogger<GrpcServiceProvider> logger)
     {
-        _ch = Net.Grpc.CreateChannel();
+        logger.LogTrace("Creating gRPC channels...");
+        _ch = Shared.Net.Grpc.CreateChannel();
 
         _services = new Dictionary<Type, ClientBase>
         {
             [typeof(CRI.CRIClient)] = new CRI.CRIClient(_ch),
-            [typeof(PVI.PVIClient)] = new PVI.PVIClient(_ch)
+            [typeof(PVI.PVIClient)] = new PVI.PVIClient(_ch),
+            [typeof(ARP.ARPClient)] = new ARP.ARPClient(_ch)
         }.ToFrozenDictionary();
+        logger.LogTrace("gRPC channels established");
     }
 
     public object? GetService(Type serviceType)

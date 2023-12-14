@@ -45,7 +45,11 @@ public class ModuleRepository : IModuleRepository, IDisposable
     
     public ModuleRepository(ILogger<ModuleRepository> logger)
     {
-        _libs = new ConcurrentDictionary<string, ModuleHandle>(new DirectoryInfo(Specials.ModulePath)
+        var path = new DirectoryInfo(Specials.ModulePath);
+        if (!path.Exists)
+            path.Create();
+        
+        _libs = new ConcurrentDictionary<string, ModuleHandle>(path
                                                               .EnumerateFiles("*.so")
                                                               .ToDictionary(file => file.Name, Open));
 
