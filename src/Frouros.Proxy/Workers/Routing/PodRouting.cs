@@ -27,8 +27,8 @@ public class PodRouting(HttpClient http, ILogger<PodRouting> logger, IPodAuthRep
         while (!token.IsCancellationRequested)
         {
             using var response = await http.PostAsJsonAsync(
-                new Uri(Specials.CentralServer, "pod"), 
-                cri.Auth,
+                new Uri(Specials.CentralServer, "pod"),
+                cri.Auth.Values.ToDictionary(value => value.UId),
                 SerializerOptions.Default,
                 cancellationToken: token);
 
