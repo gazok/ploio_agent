@@ -52,6 +52,8 @@ public class VMAWorker(HttpClient http, IModuleRepository repo, ILogger<VMAWorke
                     repo[info.GUID].Enabled = info.Activation == ModuleActivation.Enabled;
                 }
             }
+
+            await Task.Delay(100, token);
         }
     }
 }
