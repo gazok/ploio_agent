@@ -27,7 +27,7 @@ namespace Frouros.Proxy.Models.Serialization;
  JsonSerializable(typeof(ModuleInfo)),
  JsonSerializable(typeof(ModuleActivationInfo)),
  JsonSerializable(typeof(IEnumerable<ModuleInfo>)),
- JsonSerializable(typeof(IReadOnlyDictionary<string, PodInfo>))]
+ JsonSerializable(typeof(Dictionary<string, PodInfo>))]
 #if DEBUG
 [JsonSourceGenerationOptions(WriteIndented = true)]
 #else
