@@ -9,16 +9,23 @@ public class PrivilegeWorker(IConfiguration configuration, ILogger<PrivilegeWork
     {
         while (!token.IsCancellationRequested)
         {
-            if (!File.Exists(Specials.PipePath)) 
+            if (!File.Exists(Specials.PipePath))
                 await Task.Delay(100, token);
-            
-            var user  = configuration.GetValue<uint>("User");
-            var group = configuration.GetValue<uint>("Group");
-            if (Native.ChangeOwner(Specials.PipePath, user, group) != 0 ||
-                Native.ChangeAccessControl(Specials.PipePath, 0x1B0 /* 660 */) != 0)
-            {
-                logger.LogCritical("Couldn't change ACL of pipe: '{}'", Native.GetLastError());
-            }
+        }
+
+        var user  = configuration.GetValue<uint>("User");
+        var group = configuration.GetValue<uint>("Group");
+
+        if (Native.ChangeOwner(Specials.PipePath, user, group) != 0 ||
+            Native.ChangeAccessControl(Specials.PipePath, 0x1B0 /* 660 */) != 0)
+        {
+            logger.LogCritical("Couldn't change ACL of pipe: '{}'", Native.GetLastError());
+        }
+
+        if (Native.ChangeOwner(Specials.ModulePath, user, group) != 0 ||
+            Native.ChangeAccessControl(Specials.ModulePath, 0x1B0 /* 660 */) != 0)
+        {
+            logger.LogCritical("Couldn't change ACL of module folder: '{}'", Native.GetLastError());
         }
     }
 }
