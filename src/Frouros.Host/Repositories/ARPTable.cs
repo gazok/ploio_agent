@@ -78,7 +78,7 @@ public class ARPTable(IApplicationInformation app, ICAMTable cam) : IARPTable
 
         // doesn't have to assert concurrency-safe
         var ret = _table.TryGetValue(addr, out var pair);
-        if (!ret || pair.Tv - DateTime.UtcNow <= TimeSpan.FromSeconds(30)) 
+        if (!ret || DateTime.UtcNow - pair.Tv <= TimeSpan.FromSeconds(30)) 
             return ret;
         
         _table.TryRemove(addr, out _);
